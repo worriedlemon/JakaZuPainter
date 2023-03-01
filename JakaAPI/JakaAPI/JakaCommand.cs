@@ -1,9 +1,9 @@
 ﻿namespace JakaAPI
 {
-
     public struct CommandParameter
     {
         public string Key { get; private set; }
+
         public string Value { get; private set; }
 
         public CommandParameter(string key, string value, bool quotes = false)
