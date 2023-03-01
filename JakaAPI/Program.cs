@@ -17,7 +17,7 @@ class Program
 
         robot.Enable();
 
-        Console.WriteLine("Press [Enter] to exit...")
+        Console.WriteLine("Press [Enter] to exit...");
         Console.ReadLine();
     }
 }
