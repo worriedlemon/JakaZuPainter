@@ -1,4 +1,5 @@
 ﻿using JakaAPI;
+using JakaAPI.Types;
 
 class Program
 {
@@ -8,16 +9,16 @@ class Program
 
         const int port = 10001;
 
-
-        Console.WriteLine(Convert.ToInt32(true));
-
-
         JakaPainter painter = new JakaPainter(ip, port);
 
-        painter.EnableRobot();
+        painter.PowerOn();
+        Console.WriteLine(painter.GetSendingResponce().rawJson);
 
+        painter.EnableRobot();
+        Console.WriteLine(painter.GetSendingResponce().rawJson);
 
         Console.WriteLine("Press [Enter] to exit...");
         Console.ReadLine();
     }
+
 }
