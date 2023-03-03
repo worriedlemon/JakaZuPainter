@@ -10,28 +10,20 @@ namespace JakaAPI.Types
 
     public class SendingResponse
     {
+        private readonly JsonObject _jsonObject;
+        public string RawJson { get; private set; }
+        public string CmdName { get; private set; }
+        public string ErrorCode { get; private set; }
+        public string ErrorMsg { get; private set; }
+
         public SendingResponse(string jsonString)
         {
-            rawJson = jsonString;
-
-            _jsonObject = JsonNode.Parse(jsonString).AsObject();
-
-            cmdName = _jsonObject["cmdName"].ToString();
-
-            errorCode = _jsonObject["errorCode"].ToString();
-
-            errorMsg = _jsonObject["errorMsg"].ToString();
+            RawJson = jsonString;
+            _jsonObject = JsonNode.Parse(jsonString)!.AsObject();
+            CmdName = _jsonObject["cmdName"]!.ToString();
+            ErrorCode = _jsonObject["errorCode"]!.ToString();
+            ErrorMsg = _jsonObject["errorMsg"]!.ToString();
         }
-
-        private readonly JsonObject _jsonObject;
-
-        public string rawJson { get; private set; }
-
-        public string cmdName { get; private set; }
-
-        public string errorCode { get; private set; }
-
-        public string errorMsg { get; private set; }
     }
 
     public class RobotDataResponse
@@ -40,6 +32,6 @@ namespace JakaAPI.Types
         {
         }
 
-        public JointPositions jointPositions { get; private set; }
+        public JointPositions JointPositions { get; private set; }
     }
 }

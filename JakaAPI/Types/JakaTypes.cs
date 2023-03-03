@@ -2,8 +2,8 @@
 {
     public enum MovementType
     {
-        Absolute,
-        Relative,
+        Absolute = 0,
+        Relative = 1
     }
 
     public struct JointPositions
@@ -82,5 +82,15 @@
         public double Rx { get; private set; }
         public double Ry { get; private set; }
         public double Rz { get; private set; }
+    }
+
+    public struct RobotData
+    {
+        public RobotData()
+        {
+
+        }
+
+
     }
 }
