@@ -11,7 +11,17 @@ namespace JakaAPI
     public class JakaRobot
     {
         private readonly Socket _socketSending;
+
         private readonly Socket _socketListening;
+
+        private readonly int _commandDelay = 100;
+
+        private string _lastSendingResponse = string.Empty;
+
+        // Currently unused
+        private string _lastListeningResponse = string.Empty;
+
+        private readonly bool _debugMode = true;
 
         /// <summary>
         /// Indicates whether the grip of the robot is being in grap state
@@ -31,35 +41,6 @@ namespace JakaAPI
 
             _socketListening = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _socketListening.Connect(new IPEndPoint(IPAddress.Parse(domain), portListening));
-
-            ResponseDaemon();
-        }
-
-        /// <summary>
-        /// Function, which works as a daemon for incoming responses till the end of the program (is invoked only once in the constructor)
-        /// </summary>
-        private async void ResponseDaemon()
-        {
-            await Task.Run(() =>
-            {
-                while (true)
-                {
-                    byte[] responseBytes = new byte[2048];
-
-                    if (_socketSending.Available == 0)
-                    {
-                        continue;
-                    }
-
-                    int numBytesReceived = _socketSending.Receive(responseBytes);
-
-                    if (responseBytes.Length > 0)
-                    {
-                        string rawJson = Encoding.ASCII.GetString(responseBytes, 0, numBytesReceived);
-                        Console.WriteLine(rawJson);
-                    }
-                }
-            });
         }
 
         /// <summary>
@@ -69,6 +50,7 @@ namespace JakaAPI
         {
             byte[] command = JakaCommand.BuildAsByteArray("power_on");
             _socketSending.Send(command);
+            OnPostCommand();
         }
 
         /// <summary>
@@ -78,6 +60,7 @@ namespace JakaAPI
         {
             byte[] command = JakaCommand.BuildAsByteArray("power_off");
             _socketSending.Send(command);
+            OnPostCommand();
         }
 
         /// <summary>
@@ -87,6 +70,7 @@ namespace JakaAPI
         {
             byte[] command = JakaCommand.BuildAsByteArray("enable_robot");
             _socketSending.Send(command);
+            OnPostCommand();
         }
 
         /// <summary>
@@ -96,15 +80,17 @@ namespace JakaAPI
         {
             byte[] command = JakaCommand.BuildAsByteArray("disable_robot");
             _socketSending.Send(command);
+            OnPostCommand();
         }
 
         /// <summary>
         /// Function for getting main robot data (powered, enabled, joint positions, etc.)
         /// </summary>
-        public void GetRobotData()
+        public RobotData GetRobotData()
         {
             byte[] command = JakaCommand.BuildAsByteArray("get_data");
             _socketSending.Send(command);
+            return new RobotData(ReadSendingResponse());
         }
 
         /// <summary>
@@ -114,7 +100,7 @@ namespace JakaAPI
         /// <param name="speed">Sets the speed in degrees per second</param>
         /// <param name="acceleration">Sets the acceleration in degrees per second squared</param>
         /// <param name="movementType">Type of a movement (absolute or relative)</param>
-        public void JointMove(JointPositions jointPositions, double speed, double acceleration, MovementType movementType)
+        public void JointMove(JointsPosition jointPositions, double speed, double acceleration, MovementType movementType)
         {
             byte[] command = JakaCommand.BuildAsByteArray("joint_move", 
                 new CommandParameter("jointPosition", $"{jointPositions}"),
@@ -125,7 +111,12 @@ namespace JakaAPI
             _socketSending.Send(command);
         }
 
-        // Function for finding Inverse Kinematic solution
+        /// <summary>
+        /// Function performs the inverse solution to the target point in cartesian space
+        /// </summary>
+        /// <param name="cartesianPosition">Specific point in cartesian space</param>
+        /// <param name="speed">Sets the speed in degrees per second</param>
+        /// <param name="acceleration">Sets the acceleration in degrees per second squared</param>
         public void JointInverseSolution(CartesianPosition cartesianPosition, double speed, double acceleration)
         {
             byte[] command = JakaCommand.BuildAsByteArray("end_move",
@@ -135,7 +126,13 @@ namespace JakaAPI
             _socketSending.Send(command);
         }
 
-        // Function for finding Linear Kinematic solution
+        /// <summary>
+        /// Function performs movement from the current position to the target position point in a straight line
+        /// </summary>
+        /// <param name="cartesianPosition">Specific point in cartesian space</param>
+        /// <param name="speed">Sets the speed in degrees per second</param>
+        /// <param name="acceleration">Sets the acceleration in degrees per second squared</param>
+        /// <param name="movementType">Type of a movement (absolute or relative)</param>
         public void MoveLinear(CartesianPosition cartesianPosition, double speed, double acceleration, MovementType movementType)
         {
             byte[] command = JakaCommand.BuildAsByteArray("moveL",
@@ -153,6 +150,7 @@ namespace JakaAPI
         {
             byte[] command = JakaCommand.BuildAsByteArray("get_digital_input_status");
             _socketSending.Send(command);
+            OnPostCommand();
         }
 
         // Experimental function for grip toggling
@@ -162,37 +160,40 @@ namespace JakaAPI
             byte[] command = JakaCommand.BuildAsByteArray("set_digital_output",
                 new CommandParameter("type", "0"),
                 new CommandParameter("index", "1"),
-                new CommandParameter("value", Convert.ToInt32(_grip).ToString())
-                );
+                new CommandParameter("value", Convert.ToInt32(_grip).ToString()));
             _socketSending.Send(command);
+            OnPostCommand();
         }
 
+        private void OnPostCommand()
+        {
+            Thread.Sleep(_commandDelay);
+            _lastSendingResponse = ReadSendingResponse();
 
+            if(_debugMode)
+            {
+                Console.WriteLine(_lastSendingResponse);
+            }        
+        }
 
-        public string GetSendingResponse()
+        private string ReadSendingResponse()
         {
             byte[] responseBytes = new byte[2048];
             int numBytesReceived = _socketSending.Receive(responseBytes);
-            string rawJson = Encoding.ASCII.GetString(responseBytes, 0, numBytesReceived);
-            // return new SendingResponse(rawJson);
-            return rawJson;
+            return Encoding.ASCII.GetString(responseBytes, 0, numBytesReceived);
         }
-        /*public SendingResponse GetSendingResponse()
-        {
-            byte[] responseBytes = new byte[2048];
-            int numBytesReceived = _socketSending.Receive(responseBytes);
-            string rawJson = Encoding.ASCII.GetString(responseBytes, 0, numBytesReceived);
-            return new SendingResponse(rawJson);
-        }*/
 
+        public string GetLastSendingResponse()
+        {
+            return _lastSendingResponse;
+        }
+
+        // Currently unused
         public string GetListeningResponse()
         {
-
             byte[] responseBytes = new byte[2048];
             int numBytesReceived = _socketListening.Receive(responseBytes);
-            string rawJson = Encoding.ASCII.GetString(responseBytes, 0, numBytesReceived);
-            // return new SendingResponse(rawJson);
-            return rawJson;
+            return Encoding.ASCII.GetString(responseBytes, 0, numBytesReceived);
         }
     }
 }
