@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace JakaAPI.Types
+namespace PainterArm
 {
     public enum CalibrationPoint
     {

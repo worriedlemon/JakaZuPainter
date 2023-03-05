@@ -1,9 +1,4 @@
-﻿using JakaAPI;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using PainterArm;
 
 namespace PainterCore
 {
@@ -13,13 +8,25 @@ namespace PainterCore
 
         public void Start()
         {
-            // Setting robot LAN configuration
             const string ip = "192.168.1.100";
             const int port = 10001;
 
-            JakaPainter painter = new JakaPainter(ip, port);
+            ParserHPGL p = new ParserHPGL();
 
-            painter.StartCalibration();
+            foreach (CommandHPGL command in p.GetNextCommand())
+            {
+                Thread.Sleep(1000);
+                Console.Write(command.Code + " ");
+                foreach(double d in command.Arguments)
+                {
+                    Console.Write(d + " ");
+                }
+                Console.WriteLine();
+            }
+
+            //JakaPainter painter = new JakaPainter(ip, port);
+
+            //painter.StartCalibration();
 
             // Every method requires a small amount of type to be executed before sending next command
             //painter.PowerOn();
@@ -28,9 +35,7 @@ namespace PainterCore
 
             //RobotData data = painter.GetRobotData();
 
-
             //painter.JointMove(new JointsPosition(30, 0, 0, 0, 0, 0), 3, 2.5, MovementType.Relative);
-
 
             //painter.DisableRobot();
 
@@ -39,5 +44,6 @@ namespace PainterCore
             // Waiting for input to exit a program
             Console.ReadKey();
         }
+
     }
 }
