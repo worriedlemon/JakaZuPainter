@@ -1,23 +1,34 @@
 ﻿using JakaAPI;
+using JakaAPI.Types;
+using System;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 class Program
 {
     static void Main(string[] args)
     {
+        // Setting robot LAN configuration
         const string ip = "192.168.1.100";
         const int port = 10001;
 
-        JakaRobot robot = new(ip, port);
+        JakaPainter painter = new JakaPainter(ip, port);
 
-        string JsonCommand = JakaCommand.Build("move", new CommandParameter("speed", "30"), new CommandParameter("accel", "10"));
+        // Every method requires a small amount of type to be executed before sending next command
+        //painter.PowerOn();
 
-        Console.WriteLine("Command example:\n" + JsonCommand);
+        //painter.EnableRobot();
 
-        robot.PowerOn();
+        //RobotData data = painter.GetRobotData();
 
-        robot.Enable();
+        painter.JointMove(new JointsPosition(30, 0, 0, 0, 0, 0), 3, 2.5, MovementType.Relative);
 
-        Console.WriteLine("Press [Enter] to exit...");
-        Console.ReadLine();
+        //painter.DisableRobot();
+
+        //painter.PowerOff();
+
+        // Waiting for input to exit a program
+        Console.ReadKey();
     }
 }
