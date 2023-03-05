@@ -1,6 +1,4 @@
-﻿using JakaAPI;
-
-namespace PainterCore
+﻿namespace PainterCore
 {
     internal class Program
     {
@@ -9,6 +7,5 @@ namespace PainterCore
             PaintingController paintingController= new PaintingController();
             paintingController.Start();
         }
-
     }
 }

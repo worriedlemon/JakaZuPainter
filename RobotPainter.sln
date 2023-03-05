@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JakaAPI", "JakaAPI\JakaAPI.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PainterCore", "PainterCore\PainterCore.csproj", "{5F2EC74F-A086-47A2-ABD2-6524952E550C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JakaPainter", "JakaPainter\JakaPainter.csproj", "{FD790453-7A0C-4AF5-9622-9A4CC4019D54}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PainterArm", "JakaPainter\PainterArm.csproj", "{FD790453-7A0C-4AF5-9622-9A4CC4019D54}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,6 +1,7 @@
 ﻿using JakaAPI.Types;
+using JakaAPI;
 
-namespace JakaAPI
+namespace PainterArm
 {
     /// <summary>
     /// Jaka Robot based implementation of painting robot
