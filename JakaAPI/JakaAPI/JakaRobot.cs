@@ -2,6 +2,7 @@
 using System.Net.Sockets;
 using System.Text;
 using JakaAPI.Types;
+using System.Globalization;
 
 namespace JakaAPI
 {
@@ -21,7 +22,7 @@ namespace JakaAPI
         // Currently unused
         private string _lastListeningResponse = string.Empty;
 
-        private readonly bool _debugMode = true;
+        private bool _debugMode = true;
 
         /// <summary>
         /// Indicates whether the grip of the robot is being in grap state
@@ -36,11 +37,11 @@ namespace JakaAPI
         /// <param name="portListening">Port for getting robot state</param>
         public JakaRobot(string domain, int portSending = 10001, int portListening = 10000)
         {
-            _socketSending = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+           /* _socketSending = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _socketSending.Connect(new IPEndPoint(IPAddress.Parse(domain), portSending));
 
             _socketListening = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            _socketListening.Connect(new IPEndPoint(IPAddress.Parse(domain), portListening));
+            _socketListening.Connect(new IPEndPoint(IPAddress.Parse(domain), portListening));*/
         }
 
         /// <summary>
@@ -104,8 +105,8 @@ namespace JakaAPI
         {
             byte[] command = JakaCommand.BuildAsByteArray("joint_move", 
                 new CommandParameter("jointPosition", $"{jointPositions}"),
-                new CommandParameter("speed", speed.ToString(System.Globalization.CultureInfo.InvariantCulture)),
-                new CommandParameter("accel", acceleration.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+                new CommandParameter("speed", speed.ToString(CultureInfo.InvariantCulture)),
+                new CommandParameter("accel", acceleration.ToString(CultureInfo.InvariantCulture)),
                 new CommandParameter("relFlag", $"{(int)movementType}"));
 
             _socketSending.Send(command);
@@ -121,8 +122,8 @@ namespace JakaAPI
         {
             byte[] command = JakaCommand.BuildAsByteArray("end_move",
                 new CommandParameter("endPosition", $"{cartesianPosition}"),
-                new CommandParameter("speed", speed.ToString(System.Globalization.CultureInfo.InvariantCulture)),
-                new CommandParameter("accel", acceleration.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+                new CommandParameter("speed", speed.ToString(CultureInfo.InvariantCulture)),
+                new CommandParameter("accel", acceleration.ToString(CultureInfo.InvariantCulture)));
             _socketSending.Send(command);
         }
 
@@ -137,8 +138,8 @@ namespace JakaAPI
         {
             byte[] command = JakaCommand.BuildAsByteArray("moveL",
                 new CommandParameter("cartPosition", $"{cartesianPosition}"),
-                new CommandParameter("speed", speed.ToString(System.Globalization.CultureInfo.InvariantCulture)),
-                new CommandParameter("accel", acceleration.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+                new CommandParameter("speed", speed.ToString(CultureInfo.InvariantCulture)),
+                new CommandParameter("accel", acceleration.ToString(CultureInfo.InvariantCulture)),
                 new CommandParameter("relFlag", $"{(int)movementType}"));
             _socketSending.Send(command);
         }

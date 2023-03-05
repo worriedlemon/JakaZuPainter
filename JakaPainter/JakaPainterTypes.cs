@@ -12,5 +12,4 @@ namespace JakaAPI.Types
         LeftBottom,
         RightBottom,
     }
-
 }
