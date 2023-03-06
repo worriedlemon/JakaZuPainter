@@ -80,6 +80,11 @@ namespace PainterCore
             return _colorsLocations.ContainsKey(color);
         }
 
+        public Point GetColorCoordinates(ColorRGB color)
+        {
+            return _colorsLocations[color];
+        }
+
         // Add color to palette
         public void AddColor(ColorRGB color)
         {
@@ -102,7 +107,7 @@ namespace PainterCore
         {
             return _strokesRemaining[color];
         }
-
+    
         // Calculate new coordinates on palette to place new color. Not done yet
         private Point GetAvaliableLocation()
         {
