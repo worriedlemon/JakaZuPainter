@@ -9,7 +9,7 @@ namespace JakaAPI
     /// <summary>
     /// Jaka Robot class with TCP-commands implemented as methods
     /// </summary>
-    public class JakaRobot
+    public partial class JakaRobot
     {
         private readonly Socket _socketSending;
 
@@ -25,11 +25,6 @@ namespace JakaAPI
         private bool _debugMode = true;
 
         /// <summary>
-        /// Indicates whether the grip of the robot is being in grap state
-        /// </summary>
-        private bool _grip = false;
-
-        /// <summary>
         /// Constructor for Jaka Robot instance
         /// </summary>
         /// <param name="domain">String representing a domain or an IP-address of a robot on LAN</param>
@@ -42,6 +37,8 @@ namespace JakaAPI
 
             _socketListening = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _socketListening.Connect(new IPEndPoint(IPAddress.Parse(domain), portListening));
+            
+            if (_debugMode) FunctionFeedback += Console.WriteLine;
         }
 
         /// <summary>
@@ -110,6 +107,7 @@ namespace JakaAPI
                 new CommandParameter("relFlag", $"{(int)movementType}"));
 
             _socketSending.Send(command);
+            OnPostCommand();
         }
 
         /// <summary>
@@ -125,6 +123,7 @@ namespace JakaAPI
                 new CommandParameter("speed", speed.ToString(CultureInfo.InvariantCulture)),
                 new CommandParameter("accel", acceleration.ToString(CultureInfo.InvariantCulture)));
             _socketSending.Send(command);
+            OnPostCommand();
         }
 
         /// <summary>
@@ -142,6 +141,7 @@ namespace JakaAPI
                 new CommandParameter("accel", acceleration.ToString(CultureInfo.InvariantCulture)),
                 new CommandParameter("relFlag", $"{(int)movementType}"));
             _socketSending.Send(command);
+            OnPostCommand();
         }
 
         /// <summary>
@@ -154,47 +154,21 @@ namespace JakaAPI
             OnPostCommand();
         }
 
-        // Experimental function for grip toggling
-        public void ToggleGrip()
+        /// <summary>
+        /// Function for setting digital output
+        /// </summary>
+        /// <param name="type">Refers to DO type: 0 - controller DO, 1 - tool DO, 2 - extend DO</param>
+        /// <param name="index">Refers to DO index: 0-48</param>
+        /// <param name="value">Refers to DO state: true/false for on/off</param>
+        public void SetDOState(byte type, byte index, bool value)
         {
-            _grip = !_grip;
             byte[] command = JakaCommand.BuildAsByteArray("set_digital_output",
-                new CommandParameter("type", "0"),
-                new CommandParameter("index", "1"),
-                new CommandParameter("value", Convert.ToInt32(_grip).ToString()));
+                new CommandParameter("type", type.ToString()),
+                new CommandParameter("index", index.ToString()),
+                new CommandParameter("value", Convert.ToInt32(value).ToString())
+                );
             _socketSending.Send(command);
             OnPostCommand();
-        }
-
-        private void OnPostCommand()
-        {
-            Thread.Sleep(_commandDelay);
-            _lastSendingResponse = ReadSendingResponse();
-
-            if(_debugMode)
-            {
-                Console.WriteLine(_lastSendingResponse);
-            }        
-        }
-
-        private string ReadSendingResponse()
-        {
-            byte[] responseBytes = new byte[2048];
-            int numBytesReceived = _socketSending.Receive(responseBytes);
-            return Encoding.ASCII.GetString(responseBytes, 0, numBytesReceived);
-        }
-
-        public string GetLastSendingResponse()
-        {
-            return _lastSendingResponse;
-        }
-
-        // Currently unused
-        public string GetListeningResponse()
-        {
-            byte[] responseBytes = new byte[2048];
-            int numBytesReceived = _socketListening.Receive(responseBytes);
-            return Encoding.ASCII.GetString(responseBytes, 0, numBytesReceived);
         }
     }
 }
