@@ -101,6 +101,13 @@ namespace JakaAPI.Types
         {
             return new Vector3(point.X, point.Y, point.Z);
         }
+
+        public override string ToString()
+        {
+            return $"[{X.ToString(CultureInfo.InvariantCulture)}," +
+                $"{Y.ToString(CultureInfo.InvariantCulture)}," +
+                $"{Z.ToString(CultureInfo.InvariantCulture)}]";
+        }
     }
 
     public struct Vector3
