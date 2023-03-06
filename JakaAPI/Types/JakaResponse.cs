@@ -27,11 +27,16 @@ namespace JakaAPI.Types
         {
             JsonObject jsonObject = JsonNode.Parse(rawJson)!.AsObject();
 
-            double[] jointsArr = jsonObject["joint_actual_position"].AsArray().Deserialize<double[]>();
+            double[] jointsArr = jsonObject["joint_actual_position"]!.AsArray().Deserialize<double[]>()!;
             ArmJointsPosition = new JointsPosition(jointsArr);
 
-            double[] cartesianArr = jsonObject["actual_position"].AsArray().Deserialize<double[]>();
+            double[] cartesianArr = jsonObject["actual_position"]!.AsArray().Deserialize<double[]>()!;
             ArmCartesianPosition = new CartesianPosition(cartesianArr);
-        }  
+        }
+
+        public override string ToString()
+        {
+            return ArmJointsPosition.ToString() + "\n" + ArmCartesianPosition.ToString();
+        }
     }
 }
