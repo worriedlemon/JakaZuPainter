@@ -8,6 +8,13 @@ namespace PainterCore
     {
         public PaintingController() { }
 
+        private async Task wait()
+        {
+            Console.WriteLine("2");
+            await Task.Delay(3000);
+            Console.WriteLine("3");
+        }
+
         public async Task Start()
         {
             const string ip = "192.168.1.100";

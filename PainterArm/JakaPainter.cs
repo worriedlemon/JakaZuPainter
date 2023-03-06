@@ -48,14 +48,46 @@ namespace PainterArm
             }
         }
 
-        public void BrushWash()
+        public async Task TakeBrush()
         {
-
+            await Task.Delay(3000);
+            Console.WriteLine("Brush taken");
         }
 
-        public void BrushDry()
+        public async Task BrushColor(Point colorLocation)
         {
+            await Task.Delay(3000);
+            Console.WriteLine("Brush colored");
+        }
 
+        public async Task BrushWash()
+        {
+            await Task.Delay(3000);
+            Console.WriteLine("Brush washed");
+        }
+
+        public async Task BrushDry()
+        {
+            await Task.Delay(3000);
+            Console.WriteLine("Brush dryed");
+        }
+
+        public async Task BrushUp()
+        {
+            await Task.Delay(3000);
+            Console.WriteLine("Brush up");
+        }
+
+        public async Task BrushDown(Point location)
+        {
+            await Task.Delay(3000);
+            Console.WriteLine("Brush down");
+        }
+
+        public async Task BrushDrawLine(Point target)
+        {
+            await Task.Delay(3000);
+            Console.WriteLine("Brush drew a line to target point");
         }
 
         // Experimental function for grip toggling
