@@ -48,7 +48,7 @@ namespace PainterArm
             }
         }
 
-        public async Task TakeBrush()
+        public async Task BrushTake()
         {
             await Task.Delay(3000);
             Console.WriteLine("Brush taken");

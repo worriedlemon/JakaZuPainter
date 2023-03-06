@@ -58,14 +58,14 @@ namespace PainterCore
 
     public class Palette
     {
-        private Dictionary<ColorRGB, Point> _colorsLocations;
+        private Dictionary<ColorRGB, CartesianPosition> _colorsLocations;
         private Dictionary<ColorRGB, int> _strokesRemaining;
         private bool _isCalibrated = false;
         private const int _strokesCountPerMixing = 5;
 
         public Palette()
         {
-            _colorsLocations = new Dictionary<ColorRGB, Point>();
+            _colorsLocations = new Dictionary<ColorRGB, CartesianPosition>();
             _strokesRemaining = new Dictionary<ColorRGB, int>();
         }
 
@@ -80,7 +80,7 @@ namespace PainterCore
             return _colorsLocations.ContainsKey(color);
         }
 
-        public Point GetColorCoordinates(ColorRGB color)
+        public CartesianPosition GetColorCoordinates(ColorRGB color)
         {
             return _colorsLocations[color];
         }
@@ -96,7 +96,7 @@ namespace PainterCore
         }
 
         // Get single stroke from palette, substract this stroke from left strokes.
-        public Point TakeStrokeFromPallete(ColorRGB color)
+        public CartesianPosition TakeStrokeFromPallete(ColorRGB color)
         {
             _strokesRemaining[color]--;
             return _colorsLocations[color];
@@ -109,9 +109,9 @@ namespace PainterCore
         }
     
         // Calculate new coordinates on palette to place new color. Not done yet
-        private Point GetAvaliableLocation()
+        private CartesianPosition GetAvaliableLocation()
         {
-            return new Point();
+            return new CartesianPosition();
         }
     }
 }

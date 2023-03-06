@@ -11,11 +11,21 @@ namespace JakaAPI
         delegate void DebugInformation(string message);
         event DebugInformation? FunctionFeedback;
 
+        private readonly int _dragStatusDelay = 333;
+
         protected void OnPostCommand()
         {
             Thread.Sleep(_commandDelay);
-            _lastSendingResponse = ReadSendingResponse();
-            FunctionFeedback?.Invoke(_lastSendingResponse);
+            _lastListeningResponse = ReadListeningResponse();
+            FunctionFeedback?.Invoke(_lastListeningResponse);
+        }
+
+        private async Task DraggingEndAsync()
+        {
+            while(GetDragStatus())
+            {
+                await Task.Delay(_dragStatusDelay);
+            }
         }
 
         private string ReadSendingResponse()
@@ -30,8 +40,12 @@ namespace JakaAPI
             return _lastSendingResponse;
         }
 
-        // Currently unused
-        public string GetListeningResponse()
+        public string GetLastListeningResponse()
+        {
+            return _lastListeningResponse;
+        }
+
+        public string ReadListeningResponse()
         {
             byte[] responseBytes = new byte[2048];
             int numBytesReceived = _socketListening.Receive(responseBytes);
