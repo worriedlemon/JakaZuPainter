@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Reflection.PortableExecutable;
 
 namespace PainterCore
 {
@@ -31,7 +32,9 @@ namespace PainterCore
 
     public class ParserHPGL
     {
-        private readonly string _filePath;
+        private readonly char _delimiter = ';';
+        private string _filePath;
+        //private readonly StreamReader _reader;
 
         public ParserHPGL(string filePath = @"..\..\..\Resources\strokes.plt")
         {
@@ -42,36 +45,24 @@ namespace PainterCore
         {
             using (StreamReader reader = new StreamReader(_filePath))
             {
-                string buffer = "";
+                string command = "";
 
                 while (!reader.EndOfStream)
                 {
-                    string line = reader.ReadLine();
-                    string[] commands = line.Split(';');
+                    int nextChar = reader.Read();
+                    char c = (char) nextChar;
 
-                    if (buffer.Length > 0)
-                    {
-                        commands[0] = buffer + commands[0];
-                        buffer = "";
-                    }
-
-                    if (line.EndsWith(";") == false)
-                    {
-                        buffer = commands[commands.Length - 1];
-                        Array.Resize(ref commands, commands.Length - 1);
-                    }
-
-                    foreach (string command in commands)
+                    if (c == _delimiter)
                     {
                         yield return ParseCommand(command);
+                        command = "";
+                    }
+                    else
+                    {
+                        command += c;
                     }
                 }
-
-                if (buffer.Length > 0)
-                {
-                    yield return ParseCommand(buffer);
-                }
-            }
+            }    
         }
 
         private static CommandHPGL ParseCommand(string commandStr)

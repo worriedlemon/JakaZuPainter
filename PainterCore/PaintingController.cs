@@ -1,4 +1,6 @@
-﻿using PainterArm;
+﻿using JakaAPI.Types;
+using PainterArm;
+using System.Reflection;
 
 namespace PainterCore
 {
@@ -6,22 +8,27 @@ namespace PainterCore
     {
         public PaintingController() { }
 
-        public void Start()
+        public async Task Start()
         {
             const string ip = "192.168.1.100";
             const int port = 10001;
+            //JakaPainter painter = new(ip, port);
+            //painter.StartCalibration();
 
-            ParserHPGL p = new ParserHPGL(@"..\..\..\Resources\strokes.plt");
+            Palette palette = new();
+            palette.CalibratePalette();
 
-            foreach (CommandHPGL command in p.GetNextCommand())
-            {               
-                Console.WriteLine("Command: " + command);
+            ParserHPGL commands = new(@"..\..\..\Resources\strokes.plt");
 
-                switch(command.Code)
+            foreach (CommandHPGL command in commands.GetNextCommand())
+            {
+                Console.WriteLine("Executing: " + command);
+
+                switch (command.Code)
                 {
                     case CodeHPGL.IN:
                         break;
-                    case CodeHPGL.PC:
+                    case CodeHPGL.PC:                        
                         break;
                     case CodeHPGL.PW:
                         break;
@@ -31,15 +38,10 @@ namespace PainterCore
                         break;
                 }
 
-                //RgbColor color = new RgbColor();
-
-
-                Thread.Sleep(1000);
+                await Task.Delay(1000);
             }
 
-            //JakaPainter painter = new JakaPainter(ip, port);
-
-            //painter.StartCalibration();
+            Console.ReadKey();
 
             //painter.PowerOn();
 
@@ -54,8 +56,7 @@ namespace PainterCore
             //painter.PowerOff();
 
             // Waiting for input to exit a program
-            Console.ReadKey();
-        }
 
+        }
     }
 }
