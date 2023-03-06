@@ -11,7 +11,12 @@ namespace PainterCore
         {
             Code = code;
             Arguments = arguments;
-        }      
+        }
+
+        public override string ToString()
+        {
+            return Code.ToString() + "[" + String.Join(",", Arguments.Select(p => p.ToString()).ToArray()) + "]";
+        }
     }
 
     public enum CodeHPGL
@@ -69,7 +74,7 @@ namespace PainterCore
             }
         }
 
-        private CommandHPGL ParseCommand(string commandStr)
+        private static CommandHPGL ParseCommand(string commandStr)
         {
             string codeStr = commandStr.Substring(0, 2);
             CodeHPGL code = (CodeHPGL)Enum.Parse(typeof(CodeHPGL), codeStr);
@@ -77,7 +82,7 @@ namespace PainterCore
             string argsStr = commandStr.Substring(2);
             if (argsStr.Length == 0)
             {
-                return new CommandHPGL(code, new double[0]);
+                return new CommandHPGL(code, Array.Empty<double>());
             }
             string[] argsArr = argsStr.Split(',');
         

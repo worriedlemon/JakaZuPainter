@@ -37,11 +37,11 @@ namespace JakaAPI
         /// <param name="portListening">Port for getting robot state</param>
         public JakaRobot(string domain, int portSending = 10001, int portListening = 10000)
         {
-           /* _socketSending = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            _socketSending = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _socketSending.Connect(new IPEndPoint(IPAddress.Parse(domain), portSending));
 
             _socketListening = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            _socketListening.Connect(new IPEndPoint(IPAddress.Parse(domain), portListening));*/
+            _socketListening.Connect(new IPEndPoint(IPAddress.Parse(domain), portListening));
         }
 
         /// <summary>

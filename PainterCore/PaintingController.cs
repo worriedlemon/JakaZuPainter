@@ -11,24 +11,36 @@ namespace PainterCore
             const string ip = "192.168.1.100";
             const int port = 10001;
 
-            ParserHPGL p = new ParserHPGL();
+            ParserHPGL p = new ParserHPGL(@"..\..\..\Resources\strokes.plt");
 
             foreach (CommandHPGL command in p.GetNextCommand())
-            {
-                Thread.Sleep(1000);
-                Console.Write(command.Code + " ");
-                foreach(double d in command.Arguments)
+            {               
+                Console.WriteLine("Command: " + command);
+
+                switch(command.Code)
                 {
-                    Console.Write(d + " ");
+                    case CodeHPGL.IN:
+                        break;
+                    case CodeHPGL.PC:
+                        break;
+                    case CodeHPGL.PW:
+                        break;
+                    case CodeHPGL.PU:
+                        break;
+                    case CodeHPGL.PD:
+                        break;
                 }
-                Console.WriteLine();
+
+                //RgbColor color = new RgbColor();
+
+
+                Thread.Sleep(1000);
             }
 
             //JakaPainter painter = new JakaPainter(ip, port);
 
             //painter.StartCalibration();
 
-            // Every method requires a small amount of type to be executed before sending next command
             //painter.PowerOn();
 
             //painter.EnableRobot();
