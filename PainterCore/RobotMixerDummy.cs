@@ -2,10 +2,15 @@
 
 namespace PainterCore
 {
+    // Temporary dummy until Robot Mixer addition
     public class RobotMixerDummy
     {
-        // Temporary dummy until Robot Mixer addition
-        public async Task MixColor(Point coordinates, ColorRGB color)
+        public RobotMixerDummy()
+        {
+
+        }
+
+        public async Task MixColor(CartesianPosition coordinates, ColorRGB color)
         {
             Console.WriteLine("Mixing... " + color);
             await Task.Delay(5000);

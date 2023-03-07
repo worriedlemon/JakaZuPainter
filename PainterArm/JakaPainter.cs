@@ -12,6 +12,10 @@ namespace PainterArm
 
         private bool _isCalibrated = false;
 
+        private BrushesControl _brushConrol;
+
+        private int _currentBrush = -1;
+
         /// <summary>
         /// Indicates whether the grip of the robot is being in grap state
         /// </summary>
@@ -20,6 +24,8 @@ namespace PainterArm
         public JakaPainter(string domain, int portSending = 10001, int portListening = 10000)
             : base(domain, portSending, portListening)
         {
+            _brushConrol = new BrushesControl();
+
             //_grip = false;
             //SetDOState(0, 0, _grip);
         }
@@ -34,7 +40,7 @@ namespace PainterArm
 
         public void CalibrateSurface(CalibrationPoint calibrationPoint)
         {
-            switch (calibrationPoint) 
+            switch (calibrationPoint)
             {
                 case CalibrationPoint.LeftBottom:
                     _canvasCoordinateSystem.Zero = GetRobotData().ArmCartesianPosition.Point;
@@ -48,43 +54,50 @@ namespace PainterArm
             }
         }
 
-        public async Task BrushTake()
+
+        // Take avaliable brush with robot arm
+        public async Task BrushTakeAvaliable()
         {
             await Task.Delay(3000);
             Console.WriteLine("Brush taken");
         }
 
-        public async Task BrushColor(Point colorLocation)
+        // Take specific brush with robot arm
+        public async Task BrushTake(int num)
         {
             await Task.Delay(3000);
-            Console.WriteLine("Brush colored");
+            Console.WriteLine($"Brush {num} taken");
+        }
+
+        // Take free brush and paint it with color on specific location
+        public async Task BrushColor(CartesianPosition colorLocation)
+        {
+            if (_currentBrush != -1)
+            {
+                await Task.Delay(3000);
+                Console.WriteLine("Brush colored");
+            }
         }
 
         public async Task BrushWash()
         {
-            await Task.Delay(3000);
-            Console.WriteLine("Brush washed");
+            if (_currentBrush != -1)
+            {
+                await Task.Delay(3000);
+                Console.WriteLine("Brush washed");
+            }
         }
 
         public async Task BrushDry()
         {
-            await Task.Delay(3000);
-            Console.WriteLine("Brush dryed");
+            if (_currentBrush != -1)
+            {
+                await Task.Delay(3000);
+                Console.WriteLine("Brush dryed");
+            }
         }
 
-        public async Task BrushUp()
-        {
-            await Task.Delay(3000);
-            Console.WriteLine("Brush up");
-        }
-
-        public async Task BrushDown(Point location)
-        {
-            await Task.Delay(3000);
-            Console.WriteLine("Brush down");
-        }
-
-        public async Task BrushDrawLine(Point target)
+        public async Task BrushDrawLine(CartesianPosition target)
         {
             await Task.Delay(3000);
             Console.WriteLine("Brush drew a line to target point");

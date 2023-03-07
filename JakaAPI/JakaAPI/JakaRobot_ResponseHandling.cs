@@ -16,8 +16,8 @@ namespace JakaAPI
         protected void OnPostCommand()
         {
             Thread.Sleep(_commandDelay);
-            _lastListeningResponse = ReadListeningResponse();
-            FunctionFeedback?.Invoke(_lastListeningResponse);
+            _lastSendingResponse = ReadSendingResponse();
+            FunctionFeedback?.Invoke(_lastSendingResponse);
         }
 
         private async Task DraggingEndAsync()

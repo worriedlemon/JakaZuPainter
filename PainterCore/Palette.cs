@@ -69,7 +69,7 @@ namespace PainterCore
             _strokesRemaining = new Dictionary<ColorRGB, int>();
         }
 
-        // Calibration function, set Palette to PainterArm coordinated
+        // Calibration function, set Palette to PainterArm coordinated + Gives it allowed borders for color adding
         public void CalibratePalette()
         {
             _isCalibrated = true;
@@ -86,7 +86,7 @@ namespace PainterCore
         }
 
         // Add color to palette
-        public void AddColor(ColorRGB color)
+        public void AddNewColor(ColorRGB color)
         {
             if (!_colorsLocations.ContainsKey(color))
             {
@@ -95,11 +95,18 @@ namespace PainterCore
             }
         }
 
-        // Get single stroke from palette, substract this stroke from left strokes.
-        public CartesianPosition TakeStrokeFromPallete(ColorRGB color)
+        public void UpdateColor(ColorRGB color)
+        {
+            if (_colorsLocations.ContainsKey(color))
+            {
+                _strokesRemaining[color] = _strokesCountPerMixing;
+            }        
+        }
+
+        // Substract this stroke from left strokes.
+        public void SubstractStroke(ColorRGB color)
         {
             _strokesRemaining[color]--;
-            return _colorsLocations[color];
         }
 
         // Get remaining strokes count for this color. 0 strokes mean Robot Mixer request

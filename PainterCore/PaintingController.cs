@@ -6,24 +6,27 @@ namespace PainterCore
 {
     public class PaintingController
     {
-        public PaintingController() { }
-
-        private async Task wait()
-        {
-            Console.WriteLine("2");
-            await Task.Delay(3000);
-            Console.WriteLine("3");
-        }
-
-        public async Task Start()
+        public PaintingController()
         {
             const string ip = "192.168.1.100";
             const int port = 10001;
-            //JakaPainter painter = new(ip, port);
-            //painter.StartCalibration();
+            _painter = new(ip, port);
 
-            Palette palette = new();
-            palette.CalibratePalette();
+            _palette = new();
+
+            _mixer = new();
+        }
+
+        private JakaPainter _painter;
+        private Palette _palette;
+        private RobotMixerDummy _mixer;
+
+        public async Task Start()
+        {
+            await InitPainter();
+            _painter.StartCalibration();
+
+            _palette.CalibratePalette();
 
             ParserHPGL commands = new(@"..\..\..\Resources\strokes.plt");
 
@@ -35,35 +38,69 @@ namespace PainterCore
                 {
                     case CodeHPGL.IN:
                         break;
-                    case CodeHPGL.PC:                        
+                    case CodeHPGL.PC:
+                        await BrushColor(command);
                         break;
                     case CodeHPGL.PW:
                         break;
                     case CodeHPGL.PU:
-                        break;
                     case CodeHPGL.PD:
+                        await BrushMove(command);
                         break;
                 }
 
                 await Task.Delay(1000);
             }
 
+            await DisablePainter();
+
             Console.ReadKey();
-
-            //painter.PowerOn();
-
-            //painter.EnableRobot();
-
-            //RobotData data = painter.GetRobotData();
-
-            //painter.JointMove(new JointsPosition(30, 0, 0, 0, 0, 0), 3, 2.5, MovementType.Relative);
-
-            //painter.DisableRobot();
-
-            //painter.PowerOff();
-
-            // Waiting for input to exit a program
-
         }
+
+
+        // Take free brush and paint it with color
+        private async Task BrushColor(CommandHPGL command)
+        {
+            ColorRGB color = new ColorRGB(command.Arguments[1], command.Arguments[2], command.Arguments[3]);
+
+            if (_palette.IsColorAdded(color))
+            {
+                if (_palette.GetStrokesLeft(color) == 0)
+                {
+                    _palette.UpdateColor(color);
+                    await _mixer.MixColor(_palette.GetColorCoordinates(color), color);
+                }
+            }
+            else
+            {
+                _palette.AddNewColor(color);
+                await _mixer.MixColor(_palette.GetColorCoordinates(color), color);
+            }
+
+            _palette.SubstractStroke(color);
+            await _painter.BrushTakeAvaliable();
+            await _painter.BrushColor(_palette.GetColorCoordinates(color));
+        }
+
+        private async Task BrushMove(CommandHPGL command)
+        {
+            // Add 2D -> 3D function
+            // _painter.BrushDrawLine();
+        }
+
+        private async Task InitPainter()
+        {
+            _painter.PowerOn();
+
+            _painter.EnableRobot();
+        }
+
+        private async Task DisablePainter()
+        {
+            _painter.DisableRobot();
+
+            _painter.PowerOff();
+        }
+
     }
 }
