@@ -56,50 +56,50 @@ namespace PainterArm
 
 
         // Take avaliable brush with robot arm
-        public async Task BrushTakeAvaliable()
+        public void BrushTakeAvaliable()
         {
-            await Task.Delay(3000);
+             Task.Delay(3000);
             Console.WriteLine("Brush taken");
         }
 
         // Take specific brush with robot arm
-        public async Task BrushTake(int num)
+        public void BrushTake(int num)
         {
-            await Task.Delay(3000);
+             Task.Delay(3000);
             Console.WriteLine($"Brush {num} taken");
         }
 
         // Take free brush and paint it with color on specific location
-        public async Task BrushColor(CartesianPosition colorLocation)
+        public void BrushColor(CartesianPosition colorLocation)
         {
             if (_currentBrush != -1)
             {
-                await Task.Delay(3000);
+                 Task.Delay(3000);
                 Console.WriteLine("Brush colored");
             }
         }
 
-        public async Task BrushWash()
+        public void BrushWash()
         {
             if (_currentBrush != -1)
             {
-                await Task.Delay(3000);
+                 Task.Delay(3000);
                 Console.WriteLine("Brush washed");
             }
         }
 
-        public async Task BrushDry()
+        public void BrushDry()
         {
             if (_currentBrush != -1)
             {
-                await Task.Delay(3000);
+                 Task.Delay(3000);
                 Console.WriteLine("Brush dryed");
             }
         }
 
-        public async Task BrushDrawLine(CartesianPosition target)
+        public void BrushDrawLine(CartesianPosition target)
         {
-            await Task.Delay(3000);
+             Task.Delay(3000);
             Console.WriteLine("Brush drew a line to target point");
         }
 

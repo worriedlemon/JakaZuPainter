@@ -136,7 +136,7 @@ namespace JakaAPI
         /// <param name="speed">Sets the speed in degrees per second</param>
         /// <param name="acceleration">Sets the acceleration in degrees per second squared</param>
         /// <param name="movementType">Type of a movement (absolute or relative)</param>
-        public async Task JointMove(JointsPosition jointPositions, double speed, double acceleration, MovementType movementType)
+        public void JointMove(JointsPosition jointPositions, double speed, double acceleration, MovementType movementType)
         {
             byte[] command = JakaCommand.BuildAsByteArray("joint_move", 
                 new CommandParameter("jointPosition", $"{jointPositions}"),
@@ -144,7 +144,6 @@ namespace JakaAPI
                 new CommandParameter("accel", acceleration.ToString(CultureInfo.InvariantCulture)),
                 new CommandParameter("relFlag", $"{(int)movementType}"));
             _socketSending.Send(command);
-            await DraggingEndAsync();
             OnPostCommand();
         }
 
@@ -154,14 +153,14 @@ namespace JakaAPI
         /// <param name="cartesianPosition">Specific point in cartesian space</param>
         /// <param name="speed">Sets the speed in degrees per second</param>
         /// <param name="acceleration">Sets the acceleration in degrees per second squared</param>
-        public async Task JointInverseSolution(CartesianPosition cartesianPosition, double speed, double acceleration)
+        public void JointInverseSolution(CartesianPosition cartesianPosition, double speed, double acceleration)
         {
             byte[] command = JakaCommand.BuildAsByteArray("end_move",
                 new CommandParameter("endPosition", $"{cartesianPosition}"),
                 new CommandParameter("speed", speed.ToString(CultureInfo.InvariantCulture)),
                 new CommandParameter("accel", acceleration.ToString(CultureInfo.InvariantCulture)));
             _socketSending.Send(command);
-            await DraggingEndAsync();
+            
             OnPostCommand();
         }
 
@@ -172,7 +171,7 @@ namespace JakaAPI
         /// <param name="speed">Sets the speed in degrees per second</param>
         /// <param name="acceleration">Sets the acceleration in degrees per second squared</param>
         /// <param name="movementType">Type of a movement (absolute or relative)</param>
-        public async Task MoveLinear(CartesianPosition cartesianPosition, double speed, double acceleration, MovementType movementType)
+        public void MoveLinear(CartesianPosition cartesianPosition, double speed, double acceleration, MovementType movementType)
         {
             byte[] command = JakaCommand.BuildAsByteArray("moveL",
                 new CommandParameter("cartPosition", $"{cartesianPosition}"),
@@ -180,7 +179,7 @@ namespace JakaAPI
                 new CommandParameter("accel", acceleration.ToString(CultureInfo.InvariantCulture)),
                 new CommandParameter("relFlag", $"{(int)movementType}"));
             _socketSending.Send(command);
-            await DraggingEndAsync();
+            
             OnPostCommand();
         }
 

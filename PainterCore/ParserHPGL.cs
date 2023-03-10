@@ -43,26 +43,24 @@ namespace PainterCore
 
         public IEnumerable<CommandHPGL> GetNextCommand()
         {
-            using (StreamReader reader = new StreamReader(_filePath))
+            using StreamReader reader = new StreamReader(_filePath);
+            string command = "";
+
+            while (!reader.EndOfStream)
             {
-                string command = "";
+                int nextChar = reader.Read();
+                char c = (char)nextChar;
 
-                while (!reader.EndOfStream)
+                if (c == _delimiter)
                 {
-                    int nextChar = reader.Read();
-                    char c = (char) nextChar;
-
-                    if (c == _delimiter)
-                    {
-                        yield return ParseCommand(command);
-                        command = "";
-                    }
-                    else
-                    {
-                        command += c;
-                    }
+                    yield return ParseCommand(command);
+                    command = "";
                 }
-            }    
+                else
+                {
+                    command += c;
+                }
+            }
         }
 
         private static CommandHPGL ParseCommand(string commandStr)

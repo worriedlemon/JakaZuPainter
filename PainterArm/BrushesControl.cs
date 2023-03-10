@@ -25,9 +25,9 @@ namespace PainterArm
             _brushesAmmount = 5;
         }
 
-        public async Task<int> GetAvaliableBrushAsync()
+        public void GetAvaliableBrushAsync()
         {
-            return 0;
+          
         }
     }
 }

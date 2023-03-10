@@ -5,10 +5,16 @@ namespace PainterCore
 {
     internal class Program
     {
-        static async Task Main(string[] args)
+        static void Main(string[] args)
         {
             PaintingController paintingController = new(); 
-            await paintingController.Start();
+            paintingController.Start();
+/*
+            JakaPainter painter = new("192.168.1.101");
+            painter.MoveLinear(new CartesianPosition(0, 0, 30, 0, 0, 0), 10, 5, MovementType.Relative);
+            //painter.WaitComplete();
+            painter.MoveLinear(new CartesianPosition(0, 0, -30, 0, 0, 0), 10, 5, MovementType.Relative);*/
+            //painter.WaitComplete();
         }
     }
 }

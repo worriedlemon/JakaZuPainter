@@ -10,10 +10,10 @@ namespace PainterCore
 
         }
 
-        public async Task MixColor(CartesianPosition coordinates, ColorRGB color)
+        public void MixColor(CartesianPosition coordinates, ColorRGB color)
         {
             Console.WriteLine("Mixing... " + color);
-            await Task.Delay(5000);
+             Task.Delay(5000);
             Console.WriteLine("Color mixed and added!");
         }
     }
