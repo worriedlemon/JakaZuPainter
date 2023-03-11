@@ -12,7 +12,9 @@ namespace PainterArm
 
         private bool _isCalibrated = false;
 
-        private BrushesControl _brushConrol;
+        private Dictionary<int, CartesianPosition> _brushesLocations;
+        private CartesianPosition _washerLocation;
+        private CartesianPosition _dryerLocation;
 
         private int _currentBrush = -1;
 
@@ -24,23 +26,39 @@ namespace PainterArm
         public JakaPainter(string domain, int portSending = 10001, int portListening = 10000)
             : base(domain, portSending, portListening)
         {
-            _brushConrol = new BrushesControl();
-
-            //_grip = false;
-            //SetDOState(0, 0, _grip);
+            _brushesLocations = new Dictionary<int, CartesianPosition>();
+            _grip = false;
+            SetDOState(0, 0, _grip);
         }
 
-        public void StartCalibration()
+        // Calibtration
+        public void CalibrateSurface()
         {
-            Console.WriteLine("-- Painter Robot Calibration --");
-            Console.WriteLine("Choose calibration option:\n 1) Canvas points\n 2) Palette colors\n 3) Water\n 4) Dryer");
-
-            _isCalibrated = true;
-        }
-
-        public void CalibrateSurface(CalibrationPoint calibrationPoint)
-        {
-            switch (calibrationPoint)
+            Console.WriteLine("---Surface calibration----\n" +
+                "1)Add LeftBottom point\n" +
+                "2)Add LeftTop point\n" +
+                "3)Add RightBottom point\n" +
+                "4)End calibration");
+            while (true)
+            {
+                int option = Int32.Parse(Console.ReadLine());
+                switch (option)
+                {
+                    case 1:
+                        _canvasCoordinateSystem.Zero = GetRobotData().ArmCartesianPosition.Point;
+                        _canvasCoordinateSystem.CanvasRPY = GetRobotData().ArmCartesianPosition.Rpymatrix;
+                        break;
+                    case 2:
+                        _canvasCoordinateSystem.AxisY = GetRobotData().ArmCartesianPosition.Point;
+                        break;
+                    case 3:
+                        _canvasCoordinateSystem.AxisX = GetRobotData().ArmCartesianPosition.Point;
+                        break;
+                    case 4:
+                        return;
+                }
+            }
+            /*switch (calibrationPoint)
             {
                 case CalibrationPoint.LeftBottom:
                     _canvasCoordinateSystem.Zero = GetRobotData().ArmCartesianPosition.Point;
@@ -51,59 +69,130 @@ namespace PainterArm
                 case CalibrationPoint.RightBottom:
                     _canvasCoordinateSystem.AxisX = GetRobotData().ArmCartesianPosition.Point;
                     break;
-            }
+            }*/
         }
 
-
-        // Take avaliable brush with robot arm
-        public void BrushTakeAvaliable()
+        public void CalibrateBrushes()
         {
-             Task.Delay(3000);
-            Console.WriteLine("Brush taken");
-        }
-
-        // Take specific brush with robot arm
-        public void BrushTake(int num)
-        {
-             Task.Delay(3000);
-            Console.WriteLine($"Brush {num} taken");
-        }
-
-        // Take free brush and paint it with color on specific location
-        public void BrushColor(CartesianPosition colorLocation)
-        {
-            if (_currentBrush != -1)
+            Console.WriteLine("---Brushes calibration----\n1)Add new brush location\n2)End calibration");
+            while (true)
             {
-                 Task.Delay(3000);
-                Console.WriteLine("Brush colored");
+                int option = Int32.Parse(Console.ReadLine());
+                switch (option)
+                {
+                    case 1:
+                        _brushesLocations.Add(_brushesLocations.Count, GetRobotData().ArmCartesianPosition);
+                        break;
+                    case 2:
+                        return;
+                }
             }
         }
 
-        public void BrushWash()
+        public void CalibrateWasher()
         {
-            if (_currentBrush != -1)
+            Console.WriteLine("---Washer calibration----\n1)Add washer location\n2)End calibration");
+            while (true)
             {
-                 Task.Delay(3000);
-                Console.WriteLine("Brush washed");
+                int option = Int32.Parse(Console.ReadLine());
+                switch (option)
+                {
+                    case 1:
+                        _washerLocation = GetRobotData().ArmCartesianPosition;
+                        break;
+                    case 2:
+                        return;
+                }
             }
+
         }
 
-        public void BrushDry()
+        public void CalibrateDryer()
         {
-            if (_currentBrush != -1)
+            Console.WriteLine("---Dryer calibration----\n1)Add dryer location\n2)End calibration");
+            while (true)
             {
-                 Task.Delay(3000);
-                Console.WriteLine("Brush dryed");
+                int option = Int32.Parse(Console.ReadLine());
+                switch (option)
+                {
+                    case 1:
+                        _dryerLocation = GetRobotData().ArmCartesianPosition;
+                        break;
+                    case 2:
+                        return;
+                }
             }
         }
-
-        public void BrushDrawLine(CartesianPosition target)
+        
+        // Draw line with canvas 2D coordinates
+        public void DrawLine(double x, double y)
         {
-             Task.Delay(3000);
-            Console.WriteLine("Brush drew a line to target point");
+            Point point3d = _canvasCoordinateSystem.Point2DToRealPoint(x, y);
+            RPYMatrix canvasRPY = _canvasCoordinateSystem.CanvasRPY;
+
+            MoveLinear(new CartesianPosition(point3d, canvasRPY), 10, 5, MovementType.Absolute);
         }
 
-        // Experimental function for grip toggling
+        // Put current brush to [washer -> dryer -> active zone] cycle
+        public void PutAsideBrush()
+        {
+            //UpdateBrushesState();
+        }
+
+        // Pick new clear brush
+        public void PickNewBrush()
+        {
+            CartesianPosition brushPosition = _brushesLocations[0];
+            Point brushPoiunt = brushPosition.Point;
+            Point upperPoint = new Point(brushPoiunt.X, brushPoiunt.Y, brushPoiunt.Z + 30);
+            RPYMatrix orthogonalRPY = new RPYMatrix(-180, 0, 0);
+
+            // Move to position above the brush
+            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 10, 5, MovementType.Absolute);
+
+            GripOff();
+
+            // Move to brush on stand
+            MoveLinear(new CartesianPosition(brushPoiunt, orthogonalRPY), 10, 5, MovementType.Absolute);
+
+            GripOn();
+
+            // Move to position above the palete again
+            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 10, 5, MovementType.Absolute);
+            //UpdateBrushesState();
+        }
+
+        // Dunk current brush it the palette color
+        public void DunkBrush(CartesianPosition colorPosition)
+        {
+            Point colorPoint = colorPosition.Point;
+            Point upperPoint = new Point(colorPoint.X, colorPoint.Y, colorPoint.Z + 30);
+            // Grip position, orthogonal to the palette surface
+            RPYMatrix orthogonalRPY = new RPYMatrix(-180, 0, 0);
+
+            // Move to position above the palete
+            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 10, 5, MovementType.Absolute);
+
+            // Move to color on palette
+            MoveLinear(new CartesianPosition(colorPoint, orthogonalRPY), 10, 5, MovementType.Absolute);
+
+            // Move to position above the palete again
+            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 10, 5, MovementType.Absolute);
+        }
+
+        // Grip methods
+        public void GripOn()
+        {
+            _grip = true;
+            SetDOState(0, 0, _grip);
+        }
+
+        public void GripOff()
+        {
+            _grip = false;
+            SetDOState(0, 0, _grip);
+        }
+
         public void ToggleGrip()
         {
             _grip = !_grip;

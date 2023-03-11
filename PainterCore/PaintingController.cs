@@ -1,6 +1,5 @@
 ﻿using JakaAPI.Types;
 using PainterArm;
-using System.Reflection;
 
 namespace PainterCore
 {
@@ -8,25 +7,30 @@ namespace PainterCore
     {
         public PaintingController()
         {
-            /*const string ip = "192.168.1.101";
+            const string ip = "192.168.1.101";
             const int port = 10001;
             _painter = new(ip, port);
 
             _palette = new();
 
-            _mixer = new();*/
+            _mixer = new();
         }
 
         private JakaPainter _painter;
         private Palette _palette;
         private RobotMixerDummy _mixer;
 
+        private ColorRGB _previousColor = new ColorRGB(0, 0, 0);
+
+
         public void Start()
         {
-            /* InitPainter();
-            _painter.StartCalibration();
-
-            _palette.CalibratePalette();*/
+            InitPainter();
+            _painter.CalibrateSurface();
+            _painter.CalibrateBrushes();
+            _painter.CalibrateWasher();
+            _painter.CalibrateDryer();
+            _palette.CalibratePalette();
 
             ParserHPGL commands = new(@"..\..\..\Resources\strokes.plt");
 
@@ -39,17 +43,18 @@ namespace PainterCore
                     case CodeHPGL.IN:
                         break;
                     case CodeHPGL.PC:
-                        BrushColor(command);
+                        BrushColor(command.Arguments);
                         break;
                     case CodeHPGL.PW:
                         break;
                     case CodeHPGL.PU:
+                        break;
                     case CodeHPGL.PD:
-                        BrushMove(command);
+                        BrushMove(command.Arguments);
                         break;
                 }
 
-                Task.Delay(1000);
+                Thread.Sleep(1000);
             }
 
             DisablePainter();
@@ -57,11 +62,9 @@ namespace PainterCore
             Console.ReadKey();
         }
 
-
-        // Take free brush and paint it with color
-        private void BrushColor(CommandHPGL command)
+        private void BrushColor(double[] arguments)
         {
-            ColorRGB color = new(command.Arguments[1], command.Arguments[2], command.Arguments[3]);
+            ColorRGB color = new(arguments[1], arguments[2], arguments[3]);
             
             if (_palette.IsColorAdded(color))
             {
@@ -78,14 +81,23 @@ namespace PainterCore
             }
 
             _palette.SubstractStroke(color);
-            //_painter.BrushTakeAvaliable();
-            _painter.BrushColor(_palette.GetColorCoordinates(color));
+
+            if(color != _previousColor)
+            {
+                _painter.PutAsideBrush();
+                _painter.PickNewBrush();
+            }
+
+            _previousColor = color;
+
+            _painter.DunkBrush(_palette.GetColorCoordinates(color));
         }
 
-        private void BrushMove(CommandHPGL command)
+        private void BrushMove(double[] arguments)
         {
-            // Add 2D -> 3D function
-            // _painter.BrushDrawLine();
+            double x = arguments[0];
+            double y = arguments[1];
+            _painter.DrawLine(x, y);
         }
 
         private void InitPainter()
@@ -99,6 +111,5 @@ namespace PainterCore
             _painter.DisableRobot();
             _painter.PowerOff();
         }
-
     }
 }

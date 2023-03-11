@@ -13,7 +13,7 @@ namespace PainterCore
         public void MixColor(CartesianPosition coordinates, ColorRGB color)
         {
             Console.WriteLine("Mixing... " + color);
-             Task.Delay(5000);
+            Thread.Sleep(5000);
             Console.WriteLine("Color mixed and added!");
         }
     }

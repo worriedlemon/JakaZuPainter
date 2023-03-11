@@ -8,35 +8,39 @@ namespace PainterCore
         {
             get
             {
-                return Red;
+                return _red;
             }
             set
             {
-                Red = Bound(value);
+                _red = Bound(value);
             }
         }
         public double Green
         {
             get
             {
-                return Green;
+                return _green;
             }
             set
             {
-                Green = Bound(value);
+                _green = Bound(value);
             }
         }
         public double Blue
         {
             get
             {
-                return Blue;
+                return _blue;
             }
             set
             {
-                Blue = Bound(value);
+                _blue = Bound(value);
             }
         }
+
+        private double _red;
+        private double _green;
+        private double _blue;
 
         public ColorRGB(double red, double green, double blue)
         {

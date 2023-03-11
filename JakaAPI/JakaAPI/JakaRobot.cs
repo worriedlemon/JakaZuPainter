@@ -15,13 +15,6 @@ namespace JakaAPI
 
         private readonly Socket _socketListening;
 
-        private readonly int _commandDelay = 100;
-
-        private string _lastSendingResponse = string.Empty;
-
-        // Currently unused
-        private string _lastListeningResponse = string.Empty;
-
         private bool _debugMode = true;
 
         /// <summary>

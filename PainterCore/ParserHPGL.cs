@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using System.Reflection.PortableExecutable;
 
 namespace PainterCore
 {
@@ -34,7 +33,6 @@ namespace PainterCore
     {
         private readonly char _delimiter = ';';
         private string _filePath;
-        //private readonly StreamReader _reader;
 
         public ParserHPGL(string filePath = @"..\..\..\Resources\strokes.plt")
         {

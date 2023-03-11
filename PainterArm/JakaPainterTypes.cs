@@ -1,9 +1,4 @@
 ﻿using JakaAPI.Types;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PainterArm
 {
@@ -19,6 +14,7 @@ namespace PainterArm
         public Vector3 Zero;
         public Vector3 AxisX;
         public Vector3 AxisY;
+        public RPYMatrix CanvasRPY;
 
         public Point Point2DToRealPoint(double x, double y)
         {
