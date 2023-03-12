@@ -1,8 +1,9 @@
 ﻿using System.Net;
 using System.Net.Sockets;
-using JakaAPI.Types;
 using System.Globalization;
 using System.Text.Json.Nodes;
+using JakaAPI.Types;
+using JakaAPI.Types.Math;
 
 namespace JakaAPI
 {

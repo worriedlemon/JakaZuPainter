@@ -1,4 +1,5 @@
 ﻿using JakaAPI.Types;
+using JakaAPI.Types.Math;
 using JakaAPI;
 
 namespace PainterArm
@@ -127,7 +128,7 @@ namespace PainterArm
         // Draw line with canvas 2D coordinates
         public void DrawLine(double x, double y)
         {
-            Point point3d = _canvasCoordinateSystem.Point2DToRealPoint(x, y);
+            Point point3d = _canvasCoordinateSystem.CanvasPointToWorldPoint(x, y);
             RPYMatrix canvasRPY = _canvasCoordinateSystem.CanvasRPY;
 
             MoveLinear(new CartesianPosition(point3d, canvasRPY), 10, 5, MovementType.Absolute);

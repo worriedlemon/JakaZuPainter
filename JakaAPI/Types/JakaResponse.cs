@@ -21,7 +21,7 @@ namespace JakaAPI.Types
     public class RobotData
     {
         public JointsPosition ArmJointsPosition { get; private set; }
-        public CartesianPosition ArmCartesianPosition { get; private set; }
+        public Math.CartesianPosition ArmCartesianPosition { get; private set; }
 
         public RobotData(string rawJson)
         {
@@ -31,7 +31,7 @@ namespace JakaAPI.Types
             ArmJointsPosition = new JointsPosition(jointsArr);
 
             double[] cartesianArr = jsonObject["actual_position"]!.AsArray().Deserialize<double[]>()!;
-            ArmCartesianPosition = new CartesianPosition(cartesianArr);
+            ArmCartesianPosition = new Math.CartesianPosition(cartesianArr);
         }
 
         public override string ToString()

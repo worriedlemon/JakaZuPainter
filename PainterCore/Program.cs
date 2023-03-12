@@ -1,5 +1,4 @@
-﻿using JakaAPI.Types;
-using PainterArm;
+﻿using PainterArm;
 
 namespace PainterCore
 {
@@ -9,6 +8,7 @@ namespace PainterCore
         {
             PaintingController paintingController = new(); 
             paintingController.Start();
+            
 /*
             JakaPainter painter = new("192.168.1.101");
             painter.MoveLinear(new CartesianPosition(0, 0, 30, 0, 0, 0), 10, 5, MovementType.Relative);

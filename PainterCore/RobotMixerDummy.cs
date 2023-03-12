@@ -1,4 +1,4 @@
-﻿using JakaAPI.Types;
+﻿using JakaAPI.Types.Math;
 
 namespace PainterCore
 {

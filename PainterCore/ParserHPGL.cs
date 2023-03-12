@@ -41,7 +41,7 @@ namespace PainterCore
 
         public IEnumerable<CommandHPGL> GetNextCommand()
         {
-            using StreamReader reader = new StreamReader(_filePath);
+            using StreamReader reader = new(_filePath);
             string command = "";
 
             while (!reader.EndOfStream)
