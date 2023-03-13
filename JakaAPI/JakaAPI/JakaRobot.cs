@@ -256,7 +256,7 @@ namespace JakaAPI
         {
             byte[] command = JakaCommand.BuildAsByteArray("get_data");
             _socketSending.Send(command);
-            return new RobotData(ReadListeningResponse());
+            return new RobotData(ReadSendingResponse());
         }
 
         /// <summary>
@@ -340,7 +340,7 @@ namespace JakaAPI
         {
             byte[] command = JakaCommand.BuildAsByteArray("wait_complete");
             _socketSending.Send(command);
-            OnPostCommand();
+            //OnPostCommand();
         }
 
         #endregion

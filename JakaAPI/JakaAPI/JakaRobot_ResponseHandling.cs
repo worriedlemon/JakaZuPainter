@@ -17,7 +17,7 @@ namespace JakaAPI
         protected void OnPostCommand()
         {
             _lastSendingResponse = ReadSendingResponse();
-            WaitComplete();
+            WaitComplete();            
             ReadSendingResponse();
             FunctionFeedback?.Invoke(_lastSendingResponse);
             Thread.Sleep(_commandDelay);

@@ -15,7 +15,7 @@ namespace PainterCore
 
         public override string ToString()
         {
-            return Code.ToString() + "[" + String.Join(",", Arguments.Select(p => p.ToString()).ToArray()) + "]";
+            return $"{Code}[" + String.Join(",", Arguments.Select(p => p.ToString()).ToArray()) + "]";
         }
     }
 
@@ -24,9 +24,8 @@ namespace PainterCore
         IN, // Initialize, start a plotting job
         PC, // Pen color (x,r,g,b)
         PW, // Pen width (w,x)
-        PU, // Pen up
-        PD, // Pen down
-        NP, // Number of pens
+        PU, // Pen up and move to (x, y, z)
+        PD, // Pen down and move to (x, y, z)
     }
 
     public class ParserHPGL
@@ -49,7 +48,7 @@ namespace PainterCore
                 int nextChar = reader.Read();
                 char c = (char)nextChar;
 
-                if (c == _delimiter)
+                if (c == _delimiter || reader.EndOfStream)
                 {
                     yield return ParseCommand(command);
                     command = "";

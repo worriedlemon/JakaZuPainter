@@ -55,7 +55,7 @@ namespace JakaAPI.Types.Math
             Z = z;
         }
 
-        public static implicit operator Vector3(Point point) => new(point.X, point.Y, point.Z);
+        public static explicit operator Vector3(Point point) => new(point.X, point.Y, point.Z);
 
         public override string ToString()
         {
@@ -85,7 +85,7 @@ namespace JakaAPI.Types.Math
 
         public static Vector3 operator +(Vector3 first, Vector3 second)
         {
-            return new Vector3(first.Dx + second.Dx, first.Dy + second.Dy, first.Dx + second.Dx);
+            return new Vector3(first.Dx + second.Dx, first.Dy + second.Dy, first.Dz + second.Dz);
         }
 
         public static Vector3 operator -(Vector3 vector) => new Vector3(-vector.Dx, -vector.Dy, -vector.Dz);
@@ -99,7 +99,7 @@ namespace JakaAPI.Types.Math
 
         public static Vector3 operator /(Vector3 vector, double divider) => vector * (1.0 / divider);
 
-        public static implicit operator Point(Vector3 vector) => new Point(vector.Dx, vector.Dy, vector.Dz);
+        public static explicit operator Point(Vector3 vector) => new Point(vector.Dx, vector.Dy, vector.Dz);
 
         /// <returns>The length of this <see cref="Vector3"> instance</returns>
         public double Length() => System.Math.Sqrt(Dx * Dx + Dy * Dy + Dz * Dz);
@@ -134,6 +134,13 @@ namespace JakaAPI.Types.Math
                 Dy = vectorA.Dz * vectorB.Dx - vectorA.Dx * vectorB.Dz,
                 Dz = vectorA.Dx * vectorB.Dy - vectorA.Dy * vectorB.Dx
             };
+        }
+
+        public override string ToString()
+        {
+            return $"[{Dx.ToString(CultureInfo.InvariantCulture)}," +
+                $"{Dy.ToString(CultureInfo.InvariantCulture)}," +
+                $"{Dz.ToString(CultureInfo.InvariantCulture)}]";
         }
     }
 

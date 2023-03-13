@@ -25,6 +25,7 @@ namespace JakaAPI.Types
 
         public RobotData(string rawJson)
         {
+            
             JsonObject jsonObject = JsonNode.Parse(rawJson)!.AsObject();
 
             double[] jointsArr = jsonObject["joint_actual_position"]!.AsArray().Deserialize<double[]>()!;

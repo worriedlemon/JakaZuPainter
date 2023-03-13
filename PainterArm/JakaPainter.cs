@@ -9,9 +9,7 @@ namespace PainterArm
     /// </summary>
     public class JakaPainter : JakaRobot
     {
-        private CoordinateSystem2D _canvasCoordinateSystem = new();
-
-        private bool _isCalibrated = false;
+        private CoordinateSystem2D? _canvasCoordinateSystem;
 
         private Dictionary<int, CartesianPosition> _brushesLocations;
         private CartesianPosition _washerLocation;
@@ -32,50 +30,69 @@ namespace PainterArm
             SetDOState(0, 0, _grip);
         }
 
-        // Calibtration
+        /// <summary>
+        /// Manual canvas calibration by three points
+        /// </summary>
         public void CalibrateSurface()
         {
-            Console.WriteLine("---Surface calibration----\n" +
-                "1)Add LeftBottom point\n" +
-                "2)Add LeftTop point\n" +
-                "3)Add RightBottom point\n" +
-                "4)End calibration");
+            byte complete = 0;
+            Point zero = new(), axisX = new(), axisY = new();
+            RPYMatrix canvasRPY = new(180, 0, 0);
+            
+            Console.WriteLine("---- [Surface calibration] ----\n" +
+                "(1) Set zero pivot point\n" +
+                "(2) Set X-axis point\n" +
+                "(3) Set Y-axis point\n" +
+                "(0) End calibration");
+
             while (true)
             {
                 int option = Int32.Parse(Console.ReadLine());
                 switch (option)
                 {
                     case 1:
-                        _canvasCoordinateSystem.Zero = GetRobotData().ArmCartesianPosition.Point;
-                        _canvasCoordinateSystem.CanvasRPY = GetRobotData().ArmCartesianPosition.Rpymatrix;
+                        zero = GetRobotData().ArmCartesianPosition.Point;
+                        canvasRPY = GetRobotData().ArmCartesianPosition.Rpymatrix;
+                        complete |= 1;
                         break;
                     case 2:
-                        _canvasCoordinateSystem.AxisY = GetRobotData().ArmCartesianPosition.Point;
+                        axisX = GetRobotData().ArmCartesianPosition.Point;
+                        complete |= 2;
                         break;
                     case 3:
-                        _canvasCoordinateSystem.AxisX = GetRobotData().ArmCartesianPosition.Point;
+                        axisY = GetRobotData().ArmCartesianPosition.Point;
+                        complete |= 4;
                         break;
-                    case 4:
+                    case 0:
+                        if (complete != 7)
+                        {
+                            Console.WriteLine("Calibration is not complete. Set missing points");
+                            break;
+                        }
+
+                        _canvasCoordinateSystem = new(zero, axisX, axisY)
+                        {
+                            CanvasRPY = canvasRPY
+                        };
+
+                        Console.WriteLine("Calibrated coordinates:");
+                        Console.WriteLine($"Zero: {_canvasCoordinateSystem.Zero}");
+                        Console.WriteLine($"AxisX: {_canvasCoordinateSystem.AxisX}");
+                        Console.WriteLine($"AxisY: {_canvasCoordinateSystem.AxisY}");
                         return;
                 }
             }
-            /*switch (calibrationPoint)
-            {
-                case CalibrationPoint.LeftBottom:
-                    _canvasCoordinateSystem.Zero = GetRobotData().ArmCartesianPosition.Point;
-                    break;
-                case CalibrationPoint.LeftTop:
-                    _canvasCoordinateSystem.AxisY = GetRobotData().ArmCartesianPosition.Point;
-                    break;
-                case CalibrationPoint.RightBottom:
-                    _canvasCoordinateSystem.AxisX = GetRobotData().ArmCartesianPosition.Point;
-                    break;
-            }*/
         }
 
+        /// <summary>
+        /// Brushes calibration by a point
+        /// </summary>
         public void CalibrateBrushes()
         {
-            Console.WriteLine("---Brushes calibration----\n1)Add new brush location\n2)End calibration");
+            Console.WriteLine("---- [Brushes calibration] ----\n" +
+                "(1) Add new brush location\n" +
+                "(0) End calibration");
+
             while (true)
             {
                 int option = Int32.Parse(Console.ReadLine());
@@ -90,9 +107,14 @@ namespace PainterArm
             }
         }
 
+        /// <summary>
+        /// Washer calibration by a point
+        /// </summary>
         public void CalibrateWasher()
         {
-            Console.WriteLine("---Washer calibration----\n1)Add washer location\n2)End calibration");
+            Console.WriteLine("---- [Washer calibration] ----\n" +
+                "(1)Add washer location\n" +
+                "(0)End calibration");
             while (true)
             {
                 int option = Int32.Parse(Console.ReadLine());
@@ -101,16 +123,21 @@ namespace PainterArm
                     case 1:
                         _washerLocation = GetRobotData().ArmCartesianPosition;
                         break;
-                    case 2:
+                    case 0:
                         return;
                 }
             }
 
         }
 
+        /// <summary>
+        /// Dryer calibration by a point
+        /// </summary>
         public void CalibrateDryer()
         {
-            Console.WriteLine("---Dryer calibration----\n1)Add dryer location\n2)End calibration");
+            Console.WriteLine("---- [Dryer calibration] ----\n" +
+                "(1) Add dryer location\n" +
+                "(0) End calibration");
             while (true)
             {
                 int option = Int32.Parse(Console.ReadLine());
@@ -125,13 +152,17 @@ namespace PainterArm
             }
         }
         
-        // Draw line with canvas 2D coordinates
+        /// <summary>
+        /// Draw line with canvas 2D coordinates
+        /// </summary>
+        /// <param name="x">X-axis offset in millimeters <i>(or special units like 25 micron?)</i></param>
+        /// <param name="y">Y-axis offset in millimeters</param>
         public void DrawLine(double x, double y)
         {
-            Point point3d = _canvasCoordinateSystem.CanvasPointToWorldPoint(x, y);
-            RPYMatrix canvasRPY = _canvasCoordinateSystem.CanvasRPY;
+            Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(x, y);
+            Console.WriteLine(point3d);
 
-            MoveLinear(new CartesianPosition(point3d, canvasRPY), 10, 5, MovementType.Absolute);
+            MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.CanvasRPY), 10, 5, MovementType.Absolute);
         }
 
         // Put current brush to [washer -> dryer -> active zone] cycle
@@ -144,22 +175,22 @@ namespace PainterArm
         public void PickNewBrush()
         {
             CartesianPosition brushPosition = _brushesLocations[0];
-            Point brushPoiunt = brushPosition.Point;
-            Point upperPoint = new Point(brushPoiunt.X, brushPoiunt.Y, brushPoiunt.Z + 30);
-            RPYMatrix orthogonalRPY = new RPYMatrix(-180, 0, 0);
+            Point brushPoint = brushPosition.Point;
+            Point upperPoint = new Point(brushPoint.X, brushPoint.Y, brushPoint.Z + 30);
+            RPYMatrix orthogonalRPY = brushPosition.Rpymatrix;
 
             // Move to position above the brush
-            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 10, 5, MovementType.Absolute);
+            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
 
             GripOff();
 
             // Move to brush on stand
-            MoveLinear(new CartesianPosition(brushPoiunt, orthogonalRPY), 10, 5, MovementType.Absolute);
+            MoveLinear(new CartesianPosition(brushPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
 
             GripOn();
 
             // Move to position above the palete again
-            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 10, 5, MovementType.Absolute);
+            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
             //UpdateBrushesState();
         }
 

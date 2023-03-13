@@ -2,55 +2,46 @@
 
 namespace PainterArm
 {
-    public enum CalibrationPoint
-    {
-        LeftTop,
-        LeftBottom,
-        RightBottom,
-    }
-
     /// <summary>
     /// Structure for representing a canvas coordinate system
     /// </summary>
-    public struct CoordinateSystem2D
+    public class CoordinateSystem2D
     {
-        public Point Zero;
+        public Point Zero, AxisX, AxisY;
 
-        public Vector3 AxisX
-        {
-            get
-            {
-                return _axisX * _maxX;
-            }
-            set
-            {
-                _maxX = value.Length();
-                _axisX = value.Normalized();
-            }
-        }
+        public RPYMatrix CanvasRPY = new(0, 0, 0);
 
-        public Vector3 AxisY
-        {
-            get
-            {
-                return _axisY * _maxY;
-            }
-            set
-            {
-                _maxY = value.Length();
-                _axisY = value.Normalized();
-            }
-        }
+        private readonly Vector3 _axisX, _axisY;
+        private readonly double _maxX, _maxY;
 
-        public RPYMatrix CanvasRPY;
-
-        private Vector3 _axisX, _axisY;
-        private double _maxX, _maxY;
         private Vector3? _zShift;
+
+        /// <summary>
+        /// Constructor for creating a new coordinate system in two dimentions (2D) based on 3 points
+        /// </summary>
+        /// <param name="zero"></param>
+        /// <param name="axisX"></param>
+        /// <param name="axisY"></param>
+        public CoordinateSystem2D(Point zero, Point axisX, Point axisY)
+        {
+            Zero = zero;
+            AxisX = axisX;
+            AxisY = axisY;
+
+            _axisX = (Vector3)AxisX - (Vector3)Zero;
+            _maxX = _axisX.Length();
+            _axisX /= _maxX;
+            _axisY = (Vector3)AxisY - (Vector3)Zero;
+            _maxY = _axisY.Length();
+            _axisY /= _maxY;
+
+            _zShift = null;
+        }
 
         /// <summary>
         /// Function for enabling a Z-axis shifting (orthogonal to X and Y)
         /// </summary>
+        /// <exception cref="InvalidOperationException"></exception>
         public void UseZShifting()
         {
             _zShift = Vector3.VectorProduct(_axisX, _axisY, false);
@@ -66,7 +57,7 @@ namespace PainterArm
         public Point CanvasPointToWorldPoint(double x, double y)
         {
             if (!(x >= 0 && x <= _maxX || y >= 0 && y <= _maxY)) throw new ArgumentException("X or Y out of field");
-            return Zero + (_axisX - Zero) * x + (_axisY - Zero) * y;
+            return (Point)((Vector3)Zero + _axisX * x + _axisY * y);
         }
 
         /// <summary>
@@ -81,7 +72,7 @@ namespace PainterArm
         public Point CanvasPointToWorldPoint(double x, double y, double z)
         {
             if (_zShift == null) throw new InvalidOperationException("Z is not used in this context");
-            return CanvasPointToWorldPoint(x, y) + (_zShift * z);
+            return (Point)((Vector3)CanvasPointToWorldPoint(x, y) + (_zShift * z));
         }
     }
 }

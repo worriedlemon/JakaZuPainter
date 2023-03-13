@@ -7,7 +7,7 @@ namespace PainterCore
     {
         public PaintingController()
         {
-            const string ip = "192.168.1.101";
+            const string ip = "192.168.1.100";
             const int port = 10001;
             _painter = new(ip, port);
 
@@ -27,12 +27,12 @@ namespace PainterCore
         {
             InitPainter();
             _painter.CalibrateSurface();
-            _painter.CalibrateBrushes();
-            _painter.CalibrateWasher();
-            _painter.CalibrateDryer();
-            _palette.CalibratePalette();
+            //_painter.CalibrateBrushes();
+            //_painter.CalibrateWasher();
+            //_painter.CalibrateDryer();
+            //_palette.CalibratePalette();
 
-            ParserHPGL commands = new(@"..\..\..\Resources\strokes.plt");
+            ParserHPGL commands = new(@"..\..\..\Resources\strokes2.plt");
 
             foreach (CommandHPGL command in commands.GetNextCommand())
             {
@@ -43,7 +43,7 @@ namespace PainterCore
                     case CodeHPGL.IN:
                         break;
                     case CodeHPGL.PC:
-                        BrushColor(command.Arguments);
+                        //BrushColor(command.Arguments);
                         break;
                     case CodeHPGL.PW:
                         break;
@@ -57,7 +57,8 @@ namespace PainterCore
                 Thread.Sleep(1000);
             }
 
-            DisablePainter();
+            Console.WriteLine("End");
+           // DisablePainter();
 
             Console.ReadKey();
         }
@@ -90,7 +91,7 @@ namespace PainterCore
 
             _previousColor = color;
 
-            _painter.DunkBrush(_palette.GetColorCoordinates(color));
+            //_painter.DunkBrush(_palette.GetColorCoordinates(color));
         }
 
         private void BrushMove(double[] arguments)
