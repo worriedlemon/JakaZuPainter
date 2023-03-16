@@ -102,6 +102,51 @@ namespace JakaAPI
         #region Movement commands
 
         /// <summary>
+        /// Function for playing a loaded program
+        /// </summary>
+        public void PlayProgram()
+        {
+            byte[] command = JakaCommand.BuildAsByteArray("play_program");
+            _socketSending.Send(command);
+            OnPostCommand();
+        }
+
+        /// <summary>
+        /// Function for loading and playing a program by its name
+        /// </summary>
+        /// <param name="name">Name of the program</param>
+        public void PlayProgram(string name)
+        {
+            LoadProgram(name);
+            PlayProgram();
+        }
+
+        /// <summary>
+        /// Function for pausing a playing program
+        /// </summary>
+        public void PauseProgram()
+        {
+            byte[] command = JakaCommand.BuildAsByteArray("pause_program");
+            _socketSending.Send(command);
+            OnPostCommand();
+        }
+
+        /// <summary>
+        /// Function for resuming a paused program
+        /// </summary>
+        public void ResumeProgram()
+        {
+            byte[] command = JakaCommand.BuildAsByteArray("resume_program");
+            _socketSending.Send(command);
+            OnPostCommand();
+        }
+
+        /// <summary>
+        /// Metafunction which operates the same to <see cref="StopMovement"/>
+        /// </summary>
+        public void StopProgram() => StopMovement();
+
+        /// <summary>
         /// Completely stops the robot movement caused by linear/kinematic/program moves
         /// </summary>
         public void StopMovement()
@@ -256,7 +301,32 @@ namespace JakaAPI
         {
             byte[] command = JakaCommand.BuildAsByteArray("get_data");
             _socketSending.Send(command);
+            Thread.Sleep(_commandDelay);
             return new RobotData(ReadSendingResponse());
+        }
+
+        /// <summary>
+        /// Function for getting loaded program name
+        /// </summary>
+        /// <returns>Name of the loaded program as <see cref="string"/> value</returns>
+        public string GetLoadedProgramName()
+        {
+            byte[] command = JakaCommand.BuildAsByteArray("get_loaded_program");
+            _socketSending.Send(command);
+            Thread.Sleep(_commandDelay);
+            return JsonNode.Parse(ReadListeningResponse())!.AsObject()["program_name"]!.GetValue<string>();
+        }
+
+        /// <summary>
+        /// Function for getting program status
+        /// </summary>
+        /// <returns>Status as <see cref="string"/> like <i>idle</i>, <i>running</i> or <i>paused</i></returns>
+        public string GetProgramStatus()
+        {
+            byte[] command = JakaCommand.BuildAsByteArray("get_program_state");
+            _socketSending.Send(command);
+            Thread.Sleep(_commandDelay);
+            return JsonNode.Parse(ReadListeningResponse())!.AsObject()["programState"]!.GetValue<string>();
         }
 
         /// <summary>
@@ -283,9 +353,33 @@ namespace JakaAPI
             return JsonNode.Parse(ReadListeningResponse())!.AsObject()["protective_stop"]!.GetValue<int>() == 1;
         }
 
+        /// <summary>
+        /// Function for getting each joint positions
+        /// </summary>
+        /// <returns>Array of <see cref="double"/> representing each joint value</returns>
+        public double[] GetJointPosition()
+        {
+            byte[] command = JakaCommand.BuildAsByteArray("get_joint_pos");
+            _socketSending.Send(command);
+            Thread.Sleep(_commandDelay);
+            return JsonNode.Parse(ReadListeningResponse())!.AsObject()["joint_pos"]!.GetValue<double[]>()!;
+        }
+
         #endregion
 
         #region Miscellaneous
+
+        /// <summary>
+        /// Function for loading a program with specified name
+        /// </summary>
+        /// <param name="name">Name of the program to load</param>
+        public void LoadProgram(string name)
+        {
+            byte[] command = JakaCommand.BuildAsByteArray("load_program",
+                new CommandParameter("programName", name, true));
+            _socketSending.Send(command);
+            OnPostCommand();
+        }
 
         /// <summary>
         /// Sets robot collision level
