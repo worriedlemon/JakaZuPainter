@@ -33,7 +33,7 @@ namespace PainterArm
         /// <summary>
         /// Manual canvas calibration by three points
         /// </summary>
-        public void CalibrateSurface()
+        public CoordinateSystem2D CalibrateSurface()
         {
             byte complete = 0;
             Point zero = new(), axisX = new(), axisY = new();
@@ -75,13 +75,21 @@ namespace PainterArm
                             CanvasRPY = canvasRPY
                         };
 
-                        Console.WriteLine("Calibrated coordinates:");
-                        Console.WriteLine($"Zero: {_canvasCoordinateSystem.Zero}");
-                        Console.WriteLine($"AxisX: {_canvasCoordinateSystem.AxisX}");
-                        Console.WriteLine($"AxisY: {_canvasCoordinateSystem.AxisY}");
-                        return;
+                        Console.WriteLine($"Calibrated coordinates:\n{_canvasCoordinateSystem}");
+
+                        return _canvasCoordinateSystem;
                 }
             }
+        }
+
+        /// <summary>
+        /// Canvas calibration based on existing <see cref="CoordinateSystem2D"/>
+        /// </summary>
+        /// <param name="cs">Existing coordinate system to be used as canvas</param>
+        public void CalibrateSurface(CoordinateSystem2D cs)
+        {
+            _canvasCoordinateSystem = cs;
+            Console.WriteLine($"Calibrated coordinates:\n{_canvasCoordinateSystem}");
         }
 
         /// <summary>

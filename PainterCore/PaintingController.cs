@@ -22,11 +22,37 @@ namespace PainterCore
 
         private ColorRGB _previousColor = new ColorRGB(0, 0, 0);
 
+        const string _configPath = @"..\..\..\Configuration\calibration.json";
 
         public void Start()
         {
             InitPainter();
-            _painter.CalibrateSurface();
+
+            while (true)
+            {
+                Console.WriteLine("Load previous calubrate configuration? [Y/N]");
+                string input = Console.ReadLine();
+
+                if (input is not ("Y" or "N"))
+                {
+                    Console.WriteLine("Unknown response. Try again.");
+                }
+                else
+                {
+                    if (input == "Y")
+                    {
+                        CoordinateSystem2D loaded = Configuration.ConfigurationManager.LoadFromFile<CoordinateSystem2D>(_configPath)!;
+                        _painter.CalibrateSurface(loaded);
+                    }
+                    else if (input == "N")
+                    {
+                        CoordinateSystem2D saved = _painter.CalibrateSurface();
+                        Configuration.ConfigurationManager.SaveToFile(saved, _configPath);
+                    }
+                    break;
+                }
+            }
+            
             //_painter.CalibrateBrushes();
             //_painter.CalibrateWasher();
             //_painter.CalibrateDryer();

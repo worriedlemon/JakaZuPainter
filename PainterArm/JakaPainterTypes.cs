@@ -74,5 +74,10 @@ namespace PainterArm
             if (_zShift == null) throw new InvalidOperationException("Z is not used in this context");
             return (Point)((Vector3)CanvasPointToWorldPoint(x, y) + (_zShift * z));
         }
+
+        public override string ToString()
+        {
+            return $"Zero: {Zero}\nAxisX: {AxisX}\nAxisY: {AxisY}";
+        }
     }
 }
