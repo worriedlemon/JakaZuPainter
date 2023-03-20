@@ -1,4 +1,4 @@
-﻿using JakaAPI.Types;
+﻿using JakaAPI.Types.Math;
 
 namespace PainterCore
 {
@@ -8,35 +8,39 @@ namespace PainterCore
         {
             get
             {
-                return Red;
+                return _red;
             }
             set
             {
-                Red = Bound(value);
+                _red = Bound(value);
             }
         }
         public double Green
         {
             get
             {
-                return Green;
+                return _green;
             }
             set
             {
-                Green = Bound(value);
+                _green = Bound(value);
             }
         }
         public double Blue
         {
             get
             {
-                return Blue;
+                return _blue;
             }
             set
             {
-                Blue = Bound(value);
+                _blue = Bound(value);
             }
         }
+
+        private double _red;
+        private double _green;
+        private double _blue;
 
         public ColorRGB(double red, double green, double blue)
         {
@@ -58,18 +62,18 @@ namespace PainterCore
 
     public class Palette
     {
-        private Dictionary<ColorRGB, Point> _colorsLocations;
+        private Dictionary<ColorRGB, CartesianPosition> _colorsLocations;
         private Dictionary<ColorRGB, int> _strokesRemaining;
         private bool _isCalibrated = false;
         private const int _strokesCountPerMixing = 5;
 
         public Palette()
         {
-            _colorsLocations = new Dictionary<ColorRGB, Point>();
+            _colorsLocations = new Dictionary<ColorRGB, CartesianPosition>();
             _strokesRemaining = new Dictionary<ColorRGB, int>();
         }
 
-        // Calibration function, set Palette to PainterArm coordinated
+        // Calibration function, set Palette to PainterArm coordinated + Gives it allowed borders for color adding
         public void CalibratePalette()
         {
             _isCalibrated = true;
@@ -80,13 +84,13 @@ namespace PainterCore
             return _colorsLocations.ContainsKey(color);
         }
 
-        public Point GetColorCoordinates(ColorRGB color)
+        public CartesianPosition GetColorCoordinates(ColorRGB color)
         {
             return _colorsLocations[color];
         }
 
         // Add color to palette
-        public void AddColor(ColorRGB color)
+        public void AddNewColor(ColorRGB color)
         {
             if (!_colorsLocations.ContainsKey(color))
             {
@@ -95,11 +99,18 @@ namespace PainterCore
             }
         }
 
-        // Get single stroke from palette, substract this stroke from left strokes.
-        public Point TakeStrokeFromPallete(ColorRGB color)
+        public void UpdateColor(ColorRGB color)
+        {
+            if (_colorsLocations.ContainsKey(color))
+            {
+                _strokesRemaining[color] = _strokesCountPerMixing;
+            }        
+        }
+
+        // Substract this stroke from left strokes.
+        public void SubstractStroke(ColorRGB color)
         {
             _strokesRemaining[color]--;
-            return _colorsLocations[color];
         }
 
         // Get remaining strokes count for this color. 0 strokes mean Robot Mixer request
@@ -109,9 +120,9 @@ namespace PainterCore
         }
     
         // Calculate new coordinates on palette to place new color. Not done yet
-        private Point GetAvaliableLocation()
+        private CartesianPosition GetAvaliableLocation()
         {
-            return new Point();
+            return new CartesianPosition();
         }
     }
 }

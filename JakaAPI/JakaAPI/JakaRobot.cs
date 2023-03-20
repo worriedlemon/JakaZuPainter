@@ -1,8 +1,9 @@
 ﻿using System.Net;
 using System.Net.Sockets;
-using JakaAPI.Types;
 using System.Globalization;
 using System.Text.Json.Nodes;
+using JakaAPI.Types;
+using JakaAPI.Types.Math;
 
 namespace JakaAPI
 {
@@ -14,13 +15,6 @@ namespace JakaAPI
         private readonly Socket _socketSending;
 
         private readonly Socket _socketListening;
-
-        private readonly int _commandDelay = 100;
-
-        private string _lastSendingResponse = string.Empty;
-
-        // Currently unused
-        private string _lastListeningResponse = string.Empty;
 
         private bool _debugMode = true;
 
@@ -108,6 +102,51 @@ namespace JakaAPI
         #region Movement commands
 
         /// <summary>
+        /// Function for playing a loaded program
+        /// </summary>
+        public void PlayProgram()
+        {
+            byte[] command = JakaCommand.BuildAsByteArray("play_program");
+            _socketSending.Send(command);
+            OnPostCommand();
+        }
+
+        /// <summary>
+        /// Function for loading and playing a program by its name
+        /// </summary>
+        /// <param name="name">Name of the program</param>
+        public void PlayProgram(string name)
+        {
+            LoadProgram(name);
+            PlayProgram();
+        }
+
+        /// <summary>
+        /// Function for pausing a playing program
+        /// </summary>
+        public void PauseProgram()
+        {
+            byte[] command = JakaCommand.BuildAsByteArray("pause_program");
+            _socketSending.Send(command);
+            OnPostCommand();
+        }
+
+        /// <summary>
+        /// Function for resuming a paused program
+        /// </summary>
+        public void ResumeProgram()
+        {
+            byte[] command = JakaCommand.BuildAsByteArray("resume_program");
+            _socketSending.Send(command);
+            OnPostCommand();
+        }
+
+        /// <summary>
+        /// Metafunction which operates the same to <see cref="StopMovement"/>
+        /// </summary>
+        public void StopProgram() => StopMovement();
+
+        /// <summary>
         /// Completely stops the robot movement caused by linear/kinematic/program moves
         /// </summary>
         public void StopMovement()
@@ -136,7 +175,7 @@ namespace JakaAPI
         /// <param name="speed">Sets the speed in degrees per second</param>
         /// <param name="acceleration">Sets the acceleration in degrees per second squared</param>
         /// <param name="movementType">Type of a movement (absolute or relative)</param>
-        public async Task JointMove(JointsPosition jointPositions, double speed, double acceleration, MovementType movementType)
+        public void JointMove(JointsPosition jointPositions, double speed, double acceleration, MovementType movementType)
         {
             byte[] command = JakaCommand.BuildAsByteArray("joint_move", 
                 new CommandParameter("jointPosition", $"{jointPositions}"),
@@ -153,13 +192,14 @@ namespace JakaAPI
         /// <param name="cartesianPosition">Specific point in cartesian space</param>
         /// <param name="speed">Sets the speed in degrees per second</param>
         /// <param name="acceleration">Sets the acceleration in degrees per second squared</param>
-        public async Task JointInverseSolution(CartesianPosition cartesianPosition, double speed, double acceleration)
+        public void JointInverseSolution(CartesianPosition cartesianPosition, double speed, double acceleration)
         {
             byte[] command = JakaCommand.BuildAsByteArray("end_move",
                 new CommandParameter("endPosition", $"{cartesianPosition}"),
                 new CommandParameter("speed", speed.ToString(CultureInfo.InvariantCulture)),
                 new CommandParameter("accel", acceleration.ToString(CultureInfo.InvariantCulture)));
             _socketSending.Send(command);
+            
             OnPostCommand();
         }
 
@@ -170,7 +210,7 @@ namespace JakaAPI
         /// <param name="speed">Sets the speed in degrees per second</param>
         /// <param name="acceleration">Sets the acceleration in degrees per second squared</param>
         /// <param name="movementType">Type of a movement (absolute or relative)</param>
-        public async Task MoveLinear(CartesianPosition cartesianPosition, double speed, double acceleration, MovementType movementType)
+        public void MoveLinear(CartesianPosition cartesianPosition, double speed, double acceleration, MovementType movementType)
         {
             byte[] command = JakaCommand.BuildAsByteArray("moveL",
                 new CommandParameter("cartPosition", $"{cartesianPosition}"),
@@ -178,6 +218,7 @@ namespace JakaAPI
                 new CommandParameter("accel", acceleration.ToString(CultureInfo.InvariantCulture)),
                 new CommandParameter("relFlag", $"{(int)movementType}"));
             _socketSending.Send(command);
+            
             OnPostCommand();
         }
 
@@ -260,7 +301,32 @@ namespace JakaAPI
         {
             byte[] command = JakaCommand.BuildAsByteArray("get_data");
             _socketSending.Send(command);
+            Thread.Sleep(_commandDelay);
             return new RobotData(ReadSendingResponse());
+        }
+
+        /// <summary>
+        /// Function for getting loaded program name
+        /// </summary>
+        /// <returns>Name of the loaded program as <see cref="string"/> value</returns>
+        public string GetLoadedProgramName()
+        {
+            byte[] command = JakaCommand.BuildAsByteArray("get_loaded_program");
+            _socketSending.Send(command);
+            Thread.Sleep(_commandDelay);
+            return JsonNode.Parse(ReadListeningResponse())!.AsObject()["program_name"]!.GetValue<string>();
+        }
+
+        /// <summary>
+        /// Function for getting program status
+        /// </summary>
+        /// <returns>Status as <see cref="string"/> like <i>idle</i>, <i>running</i> or <i>paused</i></returns>
+        public string GetProgramStatus()
+        {
+            byte[] command = JakaCommand.BuildAsByteArray("get_program_state");
+            _socketSending.Send(command);
+            Thread.Sleep(_commandDelay);
+            return JsonNode.Parse(ReadListeningResponse())!.AsObject()["programState"]!.GetValue<string>();
         }
 
         /// <summary>
@@ -272,7 +338,7 @@ namespace JakaAPI
             byte[] command = JakaCommand.BuildAsByteArray("drag_status");
             _socketSending.Send(command);
             Thread.Sleep(_commandDelay);
-            return JsonNode.Parse(ReadSendingResponse())!.AsObject()["drag_status"]!.GetValue<string>() == "True";
+            return JsonNode.Parse(ReadListeningResponse())!.AsObject()["drag_status"]!.GetValue<string>() == "True";
         }
 
         /// <summary>
@@ -284,12 +350,36 @@ namespace JakaAPI
             byte[] command = JakaCommand.BuildAsByteArray("protective_stop");
             _socketSending.Send(command);
             Thread.Sleep(_commandDelay);
-            return JsonNode.Parse(ReadSendingResponse())!.AsObject()["protective_stop"]!.GetValue<int>() == 1;
+            return JsonNode.Parse(ReadListeningResponse())!.AsObject()["protective_stop"]!.GetValue<int>() == 1;
+        }
+
+        /// <summary>
+        /// Function for getting each joint positions
+        /// </summary>
+        /// <returns>Array of <see cref="double"/> representing each joint value</returns>
+        public double[] GetJointPosition()
+        {
+            byte[] command = JakaCommand.BuildAsByteArray("get_joint_pos");
+            _socketSending.Send(command);
+            Thread.Sleep(_commandDelay);
+            return JsonNode.Parse(ReadListeningResponse())!.AsObject()["joint_pos"]!.GetValue<double[]>()!;
         }
 
         #endregion
 
         #region Miscellaneous
+
+        /// <summary>
+        /// Function for loading a program with specified name
+        /// </summary>
+        /// <param name="name">Name of the program to load</param>
+        public void LoadProgram(string name)
+        {
+            byte[] command = JakaCommand.BuildAsByteArray("load_program",
+                new CommandParameter("programName", name, true));
+            _socketSending.Send(command);
+            OnPostCommand();
+        }
 
         /// <summary>
         /// Sets robot collision level
@@ -312,7 +402,7 @@ namespace JakaAPI
             byte[] command = JakaCommand.BuildAsByteArray("get_clsn_sensitivity");
             _socketSending.Send(command);
             Thread.Sleep(_commandDelay);
-            return JsonNode.Parse(ReadSendingResponse())!.AsObject()["sensitivityVal"]!.GetValue<byte>();
+            return JsonNode.Parse(ReadListeningResponse())!.AsObject()["sensitivityVal"]!.GetValue<byte>();
         }
 
         /// <summary>
@@ -344,7 +434,7 @@ namespace JakaAPI
         {
             byte[] command = JakaCommand.BuildAsByteArray("wait_complete");
             _socketSending.Send(command);
-            OnPostCommand();
+            //OnPostCommand();
         }
 
         #endregion

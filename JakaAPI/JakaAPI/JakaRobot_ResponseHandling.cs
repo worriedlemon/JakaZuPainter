@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 
 namespace JakaAPI
 {
@@ -11,11 +7,20 @@ namespace JakaAPI
         delegate void DebugInformation(string message);
         event DebugInformation? FunctionFeedback;
 
+        private readonly int _commandDelay = 50;
+
+        private string _lastSendingResponse = string.Empty;
+
+        // Currently unused
+        private string _lastListeningResponse = string.Empty;
+      
         protected void OnPostCommand()
         {
-            Thread.Sleep(_commandDelay);
             _lastSendingResponse = ReadSendingResponse();
+            WaitComplete();            
+            ReadSendingResponse();
             FunctionFeedback?.Invoke(_lastSendingResponse);
+            Thread.Sleep(_commandDelay);
         }
 
         private string ReadSendingResponse()
@@ -25,17 +30,15 @@ namespace JakaAPI
             return Encoding.ASCII.GetString(responseBytes, 0, numBytesReceived);
         }
 
-        public string GetLastSendingResponse()
-        {
-            return _lastSendingResponse;
-        }
-
-        // Currently unused
-        public string GetListeningResponse()
+        public string ReadListeningResponse()
         {
             byte[] responseBytes = new byte[2048];
             int numBytesReceived = _socketListening.Receive(responseBytes);
             return Encoding.ASCII.GetString(responseBytes, 0, numBytesReceived);
         }
+
+        public string GetLastSendingResponse() => _lastSendingResponse;
+
+        public string GetLastListeningResponse() => _lastListeningResponse;
     }
 }

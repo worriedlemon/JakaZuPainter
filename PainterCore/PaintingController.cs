@@ -1,31 +1,64 @@
 ﻿using JakaAPI.Types;
 using PainterArm;
-using System.Reflection;
 
 namespace PainterCore
 {
     public class PaintingController
     {
-        public PaintingController() { }
-
-        private async Task wait()
-        {
-            Console.WriteLine("2");
-            await Task.Delay(3000);
-            Console.WriteLine("3");
-        }
-
-        public async Task Start()
+        public PaintingController()
         {
             const string ip = "192.168.1.100";
             const int port = 10001;
-            //JakaPainter painter = new(ip, port);
-            //painter.StartCalibration();
+            _painter = new(ip, port);
 
-            Palette palette = new();
-            palette.CalibratePalette();
+            _palette = new();
 
-            ParserHPGL commands = new(@"..\..\..\Resources\strokes.plt");
+            _mixer = new();
+        }
+
+        private JakaPainter _painter;
+        private Palette _palette;
+        private RobotMixerDummy _mixer;
+
+        private ColorRGB _previousColor = new ColorRGB(0, 0, 0);
+
+        const string _configPath = @"..\..\..\Configuration\calibration.json";
+
+        public void Start()
+        {
+            InitPainter();
+
+            while (true)
+            {
+                Console.WriteLine("Load previous calubrate configuration? [Y/N]");
+                string input = Console.ReadLine();
+
+                if (input is not ("Y" or "N"))
+                {
+                    Console.WriteLine("Unknown response. Try again.");
+                }
+                else
+                {
+                    if (input == "Y")
+                    {
+                        CoordinateSystem2D loaded = Configuration.ConfigurationManager.LoadFromFile<CoordinateSystem2D>(_configPath)!;
+                        _painter.CalibrateSurface(loaded);
+                    }
+                    else if (input == "N")
+                    {
+                        CoordinateSystem2D saved = _painter.CalibrateSurface();
+                        Configuration.ConfigurationManager.SaveToFile(saved, _configPath);
+                    }
+                    break;
+                }
+            }
+            
+            //_painter.CalibrateBrushes();
+            //_painter.CalibrateWasher();
+            //_painter.CalibrateDryer();
+            //_palette.CalibratePalette();
+
+            ParserHPGL commands = new(@"..\..\..\Resources\strokes2.plt");
 
             foreach (CommandHPGL command in commands.GetNextCommand())
             {
@@ -35,35 +68,75 @@ namespace PainterCore
                 {
                     case CodeHPGL.IN:
                         break;
-                    case CodeHPGL.PC:                        
+                    case CodeHPGL.PC:
+                        //BrushColor(command.Arguments);
                         break;
                     case CodeHPGL.PW:
                         break;
                     case CodeHPGL.PU:
                         break;
                     case CodeHPGL.PD:
+                        BrushMove(command.Arguments);
                         break;
                 }
 
-                await Task.Delay(1000);
+                Thread.Sleep(1000);
             }
 
+            Console.WriteLine("End");
+           // DisablePainter();
+
             Console.ReadKey();
+        }
 
-            //painter.PowerOn();
+        private void BrushColor(double[] arguments)
+        {
+            ColorRGB color = new(arguments[1], arguments[2], arguments[3]);
+            
+            if (_palette.IsColorAdded(color))
+            {
+                if (_palette.GetStrokesLeft(color) == 0)
+                {
+                    _palette.UpdateColor(color);
+                    _mixer.MixColor(_palette.GetColorCoordinates(color), color);
+                }
+            }
+            else
+            {
+                _palette.AddNewColor(color);
+                _mixer.MixColor(_palette.GetColorCoordinates(color), color);
+            }
 
-            //painter.EnableRobot();
+            _palette.SubstractStroke(color);
 
-            //RobotData data = painter.GetRobotData();
+            if(color != _previousColor)
+            {
+                _painter.PutAsideBrush();
+                _painter.PickNewBrush();
+            }
 
-            //painter.JointMove(new JointsPosition(30, 0, 0, 0, 0, 0), 3, 2.5, MovementType.Relative);
+            _previousColor = color;
 
-            //painter.DisableRobot();
+            //_painter.DunkBrush(_palette.GetColorCoordinates(color));
+        }
 
-            //painter.PowerOff();
+        private void BrushMove(double[] arguments)
+        {
+            double x = arguments[0];
+            double y = arguments[1];
+            _painter.DrawLine(x, y);
+        }
 
-            // Waiting for input to exit a program
+        private void InitPainter()
+        {
+            _painter.PowerOn();
+            _painter.EnableRobot();
+        }
 
+        private void DisablePainter()
+        {
+            _painter.DisableRobot();
+            _painter.PowerOff();
         }
     }
 }

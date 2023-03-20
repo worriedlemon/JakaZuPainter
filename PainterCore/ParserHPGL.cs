@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using System.Reflection.PortableExecutable;
 
 namespace PainterCore
 {
@@ -16,7 +15,7 @@ namespace PainterCore
 
         public override string ToString()
         {
-            return Code.ToString() + "[" + String.Join(",", Arguments.Select(p => p.ToString()).ToArray()) + "]";
+            return $"{Code}[" + String.Join(",", Arguments.Select(p => p.ToString()).ToArray()) + "]";
         }
     }
 
@@ -25,16 +24,14 @@ namespace PainterCore
         IN, // Initialize, start a plotting job
         PC, // Pen color (x,r,g,b)
         PW, // Pen width (w,x)
-        PU, // Pen up
-        PD, // Pen down
-        NP, // Number of pens
+        PU, // Pen up and move to (x, y, z)
+        PD, // Pen down and move to (x, y, z)
     }
 
     public class ParserHPGL
     {
         private readonly char _delimiter = ';';
         private string _filePath;
-        //private readonly StreamReader _reader;
 
         public ParserHPGL(string filePath = @"..\..\..\Resources\strokes.plt")
         {
@@ -43,26 +40,24 @@ namespace PainterCore
 
         public IEnumerable<CommandHPGL> GetNextCommand()
         {
-            using (StreamReader reader = new StreamReader(_filePath))
+            using StreamReader reader = new(_filePath);
+            string command = "";
+
+            while (!reader.EndOfStream)
             {
-                string command = "";
+                int nextChar = reader.Read();
+                char c = (char)nextChar;
 
-                while (!reader.EndOfStream)
+                if (c == _delimiter || reader.EndOfStream)
                 {
-                    int nextChar = reader.Read();
-                    char c = (char) nextChar;
-
-                    if (c == _delimiter)
-                    {
-                        yield return ParseCommand(command);
-                        command = "";
-                    }
-                    else
-                    {
-                        command += c;
-                    }
+                    yield return ParseCommand(command);
+                    command = "";
                 }
-            }    
+                else
+                {
+                    command += c;
+                }
+            }
         }
 
         private static CommandHPGL ParseCommand(string commandStr)
