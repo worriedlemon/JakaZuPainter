@@ -70,10 +70,7 @@ namespace PainterArm
                             break;
                         }
 
-                        _canvasCoordinateSystem = new(zero, axisX, axisY)
-                        {
-                            CanvasRPY = canvasRPY
-                        };
+                        _canvasCoordinateSystem = new(zero, axisX, axisY, canvasRPY);
 
                         Console.WriteLine($"Calibrated coordinates:\n{_canvasCoordinateSystem}");
 

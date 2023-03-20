@@ -1,4 +1,5 @@
 ﻿using JakaAPI.Types.Math;
+using System.Text.Json.Serialization;
 
 namespace PainterArm
 {
@@ -7,9 +8,11 @@ namespace PainterArm
     /// </summary>
     public class CoordinateSystem2D
     {
+        [JsonInclude]
         public Point Zero, AxisX, AxisY;
 
-        public RPYMatrix CanvasRPY = new(0, 0, 0);
+        [JsonInclude]
+        public RPYMatrix CanvasRPY;
 
         private readonly Vector3 _axisX, _axisY;
         private readonly double _maxX, _maxY;
@@ -22,11 +25,13 @@ namespace PainterArm
         /// <param name="zero"></param>
         /// <param name="axisX"></param>
         /// <param name="axisY"></param>
-        public CoordinateSystem2D(Point zero, Point axisX, Point axisY)
+        [JsonConstructor]
+        public CoordinateSystem2D(Point zero, Point axisX, Point axisY, RPYMatrix direction)
         {
             Zero = zero;
             AxisX = axisX;
             AxisY = axisY;
+            CanvasRPY = direction;
 
             _axisX = (Vector3)AxisX - (Vector3)Zero;
             _maxX = _axisX.Length();

@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Text.Json.Serialization;
 
 namespace JakaAPI.Types.Math
 {
@@ -48,6 +49,7 @@ namespace JakaAPI.Types.Math
         public double Y { get; private set; }
         public double Z { get; private set; }
 
+        [JsonConstructor]
         public Point(double x, double y, double z)
         {
             X = x;
@@ -150,6 +152,7 @@ namespace JakaAPI.Types.Math
         public double Ry { get; private set; }
         public double Rz { get; private set; }
 
+        [JsonConstructor]
         public RPYMatrix(double rx, double ry, double rz)
         {
             Rx = rx;

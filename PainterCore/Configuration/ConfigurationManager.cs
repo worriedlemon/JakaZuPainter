@@ -4,16 +4,22 @@ namespace PainterCore.Configuration
 {
     static public class ConfigurationManager
     {
+        private static JsonSerializerOptions _serializerOptions = new()
+        {
+            WriteIndented = true,
+            IncludeFields = true
+        };
+
         public static void SaveToFile<T>(T obj, string path)
         {
-            FileStream fs = new(path, FileMode.OpenOrCreate, FileAccess.Write);
-            JsonSerializer.Serialize(fs, obj);
+            string result = JsonSerializer.Serialize(obj, _serializerOptions);
+            File.WriteAllText(path, result);
         }
 
         public static T? LoadFromFile<T>(string path)
         {
-            FileStream fs = new(path, FileMode.Open, FileAccess.Read);
-            return JsonSerializer.Deserialize<T>(fs);
+            string result = File.ReadAllText(path);
+            return JsonSerializer.Deserialize<T>(result);
         }
     }
 }
