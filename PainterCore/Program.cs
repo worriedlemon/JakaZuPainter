@@ -4,7 +4,7 @@ namespace PainterCore
 {
     internal class Program
     {
-        private void PrintLicenseInfo()
+        private static void PrintLicenseInfo()
         {
             Console.WriteLine("\tRobot-painter  Copyright (C) 2023  E. Shteinberg, A. Skuratov\n" +
                 "\tThis program comes with ABSOLUTELY NO WARRANTY.\n" +
