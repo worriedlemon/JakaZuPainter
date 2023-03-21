@@ -17,6 +17,7 @@ namespace PainterArm
         private readonly Vector3 _axisX, _axisY;
         private readonly double _maxX, _maxY;
 
+        [JsonIgnore]
         private Vector3? _zShift;
 
         /// <summary>
@@ -26,12 +27,12 @@ namespace PainterArm
         /// <param name="axisX"></param>
         /// <param name="axisY"></param>
         [JsonConstructor]
-        public CoordinateSystem2D(Point zero, Point axisX, Point axisY, RPYMatrix direction)
+        public CoordinateSystem2D(Point zero, Point axisX, Point axisY, RPYMatrix canvasRpy)
         {
             Zero = zero;
             AxisX = axisX;
             AxisY = axisY;
-            CanvasRPY = direction;
+            CanvasRPY = canvasRpy;
 
             _axisX = (Vector3)AxisX - (Vector3)Zero;
             _maxX = _axisX.Length();

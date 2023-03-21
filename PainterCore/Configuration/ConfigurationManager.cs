@@ -7,7 +7,8 @@ namespace PainterCore.Configuration
         private static JsonSerializerOptions _serializerOptions = new()
         {
             WriteIndented = true,
-            IncludeFields = true
+            IncludeFields = true,
+            IgnoreReadOnlyFields = true
         };
 
         public static void SaveToFile<T>(T obj, string path)
@@ -19,7 +20,7 @@ namespace PainterCore.Configuration
         public static T? LoadFromFile<T>(string path)
         {
             string result = File.ReadAllText(path);
-            return JsonSerializer.Deserialize<T>(result);
+            return JsonSerializer.Deserialize<T>(result, _serializerOptions);
         }
     }
 }

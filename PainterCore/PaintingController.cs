@@ -30,12 +30,14 @@ namespace PainterCore
 
             while (true)
             {
-                Console.WriteLine("Load previous calubrate configuration? [Y/N]");
+                Console.WriteLine("Load previous calibration configuration? [Y/N]");
+                Console.Write("> ");
                 string input = Console.ReadLine();
 
-                if (input is not ("Y" or "N"))
+                if (!(input == "Y" || input == "N"))
                 {
                     Console.WriteLine("Unknown response. Try again.");
+                    Console.Write("> ");
                 }
                 else
                 {
@@ -83,9 +85,9 @@ namespace PainterCore
                 Thread.Sleep(1000);
             }
 
-            Console.WriteLine("End");
-           // DisablePainter();
+            DisablePainter();
 
+            Console.WriteLine("\nPress any button to exit the program...");
             Console.ReadKey();
         }
 
@@ -131,10 +133,12 @@ namespace PainterCore
         {
             _painter.PowerOn();
             _painter.EnableRobot();
+            _painter.GripOff();
         }
 
         private void DisablePainter()
         {
+            _painter.GripOff();
             _painter.DisableRobot();
             _painter.PowerOff();
         }

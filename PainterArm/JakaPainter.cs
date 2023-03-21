@@ -27,7 +27,6 @@ namespace PainterArm
         {
             _brushesLocations = new Dictionary<int, CartesianPosition>();
             _grip = false;
-            SetDOState(0, 0, _grip);
         }
 
         /// <summary>
@@ -47,6 +46,7 @@ namespace PainterArm
 
             while (true)
             {
+                Console.Write("> ");
                 int option = Int32.Parse(Console.ReadLine());
                 switch (option)
                 {
@@ -66,7 +66,7 @@ namespace PainterArm
                     case 0:
                         if (complete != 7)
                         {
-                            Console.WriteLine("Calibration is not complete. Set missing points");
+                            Console.WriteLine("Calibration is not complete. Please, set missing points!");
                             break;
                         }
 
@@ -75,6 +75,9 @@ namespace PainterArm
                         Console.WriteLine($"Calibrated coordinates:\n{_canvasCoordinateSystem}");
 
                         return _canvasCoordinateSystem;
+                    default:
+                        Console.WriteLine("Unknown option. Try again.");
+                        break;
                 }
             }
         }
