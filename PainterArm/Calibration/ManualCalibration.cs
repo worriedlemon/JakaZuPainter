@@ -3,21 +3,24 @@
 namespace PainterArm.Calibration
 {
     /// <summary>
-    /// Manual canvas calibration by three points
+    /// Manual surface calibration by three points
     /// </summary>
     public class ManualCalibration : AbstractCalibrationBehavior
     {
+        /// <summary>
+        /// Constructor for initializing manual surface calibration
+        /// </summary>
+        /// <param name="painterArm"></param>
         public ManualCalibration(JakaPainter painterArm) : base(painterArm) { }
 
-        public override CoordinateSystem2D CalibrateSurface()
+        public override CoordinateSystem2D Calibrate()
         {
             byte complete = 0;
             Point zero = new(), axisX = new(), axisY = new();
             RPYMatrix canvasRPY = new(180, 0, 0);
-            CoordinateSystem2D canvasCoordinateSystem;
+            CoordinateSystem2D calibratedCoordinateSystem;
 
-            Console.WriteLine("---- [Surface calibration] ----\n" +
-                "(1) Set zero pivot point\n" +
+            Console.WriteLine("(1) Set zero pivot point\n" +
                 "(2) Set X-axis point\n" +
                 "(3) Set Y-axis point\n" +
                 "(0) End calibration");
@@ -47,11 +50,11 @@ namespace PainterArm.Calibration
                             break;
                         }
 
-                        canvasCoordinateSystem = new(zero, axisX, axisY, canvasRPY);
+                        calibratedCoordinateSystem = new(zero, axisX, axisY, canvasRPY);
 
-                        Console.WriteLine($"Calibrated coordinates:\n{canvasCoordinateSystem}");
+                        Console.WriteLine($"Calibrated coordinates:\n{calibratedCoordinateSystem}");
 
-                        return canvasCoordinateSystem;
+                        return calibratedCoordinateSystem;
                 }
             }
         }

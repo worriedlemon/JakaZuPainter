@@ -19,6 +19,6 @@
         /// Function for calibrating surface
         /// </summary>
         /// <returns>Calibrated surface as <see cref="CoordinateSystem2D"/></returns>
-        public abstract CoordinateSystem2D CalibrateSurface();
+        public abstract CoordinateSystem2D Calibrate();
     }
 }

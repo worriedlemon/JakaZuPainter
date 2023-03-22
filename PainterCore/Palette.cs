@@ -1,4 +1,6 @@
 ﻿using JakaAPI.Types.Math;
+using PainterArm;
+using PainterArm.Calibration;
 
 namespace PainterCore
 {
@@ -64,30 +66,27 @@ namespace PainterCore
     {
         private Dictionary<ColorRGB, CartesianPosition> _colorsLocations;
         private Dictionary<ColorRGB, int> _strokesRemaining;
-        private bool _isCalibrated = false;
-        private const int _strokesCountPerMixing = 5;
 
-        public Palette()
+        private const int _strokesCountPerMixing = 5;
+        
+        private JakaPainter _painter;
+        private CoordinateSystem2D? _coordinateSystem;
+        private AbstractCalibrationBehavior _calibrationBehavior;
+
+        public Palette(JakaPainter painterArm)
         {
             _colorsLocations = new Dictionary<ColorRGB, CartesianPosition>();
             _strokesRemaining = new Dictionary<ColorRGB, int>();
+            _painter = painterArm;
+            _calibrationBehavior = new ManualCalibration(_painter);
         }
 
         // Calibration function, set Palette to PainterArm coordinated + Gives it allowed borders for color adding
-        public void CalibratePalette()
-        {
-            _isCalibrated = true;
-        }
+        public void CalibratePalette() => _coordinateSystem = _calibrationBehavior.Calibrate();
 
-        public bool IsColorAdded(ColorRGB color)
-        {
-            return _colorsLocations.ContainsKey(color);
-        }
+        public bool IsColorAdded(ColorRGB color) => _colorsLocations.ContainsKey(color);
 
-        public CartesianPosition GetColorCoordinates(ColorRGB color)
-        {
-            return _colorsLocations[color];
-        }
+        public CartesianPosition GetColorCoordinates(ColorRGB color) => _colorsLocations[color];
 
         // Add color to palette
         public void AddNewColor(ColorRGB color)
@@ -108,21 +107,16 @@ namespace PainterCore
         }
 
         // Substract this stroke from left strokes.
-        public void SubstractStroke(ColorRGB color)
-        {
-            _strokesRemaining[color]--;
-        }
+        public void SubstractStroke(ColorRGB color) => _strokesRemaining[color]--;
 
         // Get remaining strokes count for this color. 0 strokes mean Robot Mixer request
-        public int GetStrokesLeft(ColorRGB color)
-        {
-            return _strokesRemaining[color];
-        }
+        public int GetStrokesLeft(ColorRGB color) => _strokesRemaining[color];
     
         // Calculate new coordinates on palette to place new color. Not done yet
         private CartesianPosition GetAvaliableLocation()
         {
-            return new CartesianPosition();
+            if (_coordinateSystem == null) throw new InvalidOperationException("Pallete is not calibrated yet");
+            return new CartesianPosition(_coordinateSystem.Zero, _coordinateSystem.CanvasRPY);
         }
     }
 }

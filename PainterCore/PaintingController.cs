@@ -1,7 +1,4 @@
-﻿using JakaAPI.Types;
-using PainterArm;
-using System.Drawing;
-using System.Reflection;
+﻿using PainterArm;
 
 namespace PainterCore
 {
@@ -10,20 +7,19 @@ namespace PainterCore
         public PaintingController()
         {
             const string ip = "192.168.1.100";
+
             _painter = new(ip);
-
-            _palette = new();
-
+            _palette = new(_painter);
             _mixer = new();
         }
 
-        private JakaPainter _painter;
-        private Palette _palette;
-        private RobotMixerDummy _mixer;
+        private readonly JakaPainter _painter;
+        private readonly Palette _palette;
+        private readonly RobotMixerDummy _mixer;
 
-        private ColorRGB _currentColor = new ColorRGB(0, 0, 0);
+        private ColorRGB _currentColor = new(0, 0, 0);
 
-        const string _configPath = @"..\..\..\Configuration\calibration.json";
+        const string _canvasConfigPath = @"..\..\..\Configuration\canvas_calibration.json";
 
         public void Start()
         {
@@ -31,7 +27,7 @@ namespace PainterCore
 
             while (true)
             {
-                Console.WriteLine("Load previous calibration configuration? [Y/N]");
+                Console.WriteLine("Load previous canvas calibration configuration? [Y/N]");
                 Console.Write("> ");
                 string input = Console.ReadLine();
 
@@ -45,21 +41,30 @@ namespace PainterCore
                     CoordinateSystem2D cs;
                     if (input == "Y")
                     {
-                        cs = Configuration.ConfigurationManager.LoadFromFile<CoordinateSystem2D>(_configPath)!;
+                        cs = Configuration.ConfigurationManager.LoadFromFile<CoordinateSystem2D>(_canvasConfigPath)!;
                     }
                     else
                     {
-                        cs = _painter.CalibrationBehavior.CalibrateSurface();
-                        Configuration.ConfigurationManager.SaveToFile(cs, _configPath);
+                        Console.WriteLine("---- [Canvas calibration] ----\n");
+                        cs = _painter.CalibrationBehavior.Calibrate();
+                        Configuration.ConfigurationManager.SaveToFile(cs, _canvasConfigPath);
                     }
                     _painter.SetCalibrationSurface(cs);
                     break;
                 }
             }
 
-            //_painter.CalibrateBrushes();
-            //_painter.CalibrateDryer();
-            //_palette.CalibratePalette();
+            Console.WriteLine("---- [Brushes calibration] ----\n");
+            _painter.CalibrateBrushes();
+
+            Console.WriteLine("---- [Dryer calibration] ----\n");
+            _painter.CalibrateDryer();
+
+            Console.WriteLine("---- [Pallete calibration] ----\n");
+            _palette.CalibratePalette();
+
+            Console.WriteLine("Calibration ended. Press any key to continue...");
+            Console.ReadKey();
 
             ParserHPGL commands = new(@"..\..\..\Resources\strokes2.plt");
 
@@ -146,12 +151,12 @@ namespace PainterCore
         {
             _painter.PowerOn();
             _painter.EnableRobot();
-            _painter.GripOff();
+            //_painter.GripOff();
         }
 
         private void DisablePainter()
         {
-            _painter.GripOff();
+            //_painter.GripOff();
             _painter.DisableRobot();
             _painter.PowerOff();
         }
