@@ -15,6 +15,8 @@ namespace PainterCore
         {
             PrintLicenseInfo();
 
+            //GlobalDefs.RobotIP = "192.168.1.100";
+
             PaintingController paintingController = new(); 
             paintingController.Start();
         }

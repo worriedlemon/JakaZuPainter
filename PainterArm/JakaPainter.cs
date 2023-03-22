@@ -1,6 +1,7 @@
 ﻿using JakaAPI.Types;
 using JakaAPI.Types.Math;
 using JakaAPI;
+using PainterArm.Calibration;
 using System;
 
 namespace PainterArm
@@ -22,22 +23,26 @@ namespace PainterArm
         /// </summary>
         private bool _grip;
 
+        public AbstractCalibrationBehavior CalibrationBehavior;
+
         public JakaPainter(string domain, int portSending = 10001, int portListening = 10000)
             : base(domain, portSending, portListening)
         {
             _brushesLocations = new Dictionary<int, CartesianPosition>();
             _grip = false;
+            SetDOState(0, 0, _grip);
+            CalibrationBehavior = new ManualCalibration(this);
         }
 
         /// <summary>
-        /// Manual canvas calibration by three points
+        /// Setting calibration surface based on existing <see cref="CoordinateSystem2D"/>
         /// </summary>
         public CoordinateSystem2D CalibrateSurface()
         {
             byte complete = 0;
             Point zero = new(), axisX = new(), axisY = new();
             RPYMatrix canvasRPY = new(180, 0, 0);
-
+            
             Console.WriteLine("---- [Surface calibration] ----\n" +
                 "(1) Set zero pivot point\n" +
                 "(2) Set X-axis point\n" +
@@ -46,7 +51,6 @@ namespace PainterArm
 
             while (true)
             {
-                Console.Write("> ");
                 int option = Int32.Parse(Console.ReadLine());
                 switch (option)
                 {
@@ -66,7 +70,7 @@ namespace PainterArm
                     case 0:
                         if (complete != 7)
                         {
-                            Console.WriteLine("Calibration is not complete. Please, set missing points!");
+                            Console.WriteLine("Calibration is not complete. Set missing points");
                             break;
                         }
 
@@ -75,9 +79,6 @@ namespace PainterArm
                         Console.WriteLine($"Calibrated coordinates:\n{_canvasCoordinateSystem}");
 
                         return _canvasCoordinateSystem;
-                    default:
-                        Console.WriteLine("Unknown option. Try again.");
-                        break;
                 }
             }
         }
@@ -86,7 +87,7 @@ namespace PainterArm
         /// Canvas calibration based on existing <see cref="CoordinateSystem2D"/>
         /// </summary>
         /// <param name="cs">Existing coordinate system to be used as canvas</param>
-        public void CalibrateSurface(CoordinateSystem2D cs)
+        public void SetCalibrationSurface(CoordinateSystem2D cs)
         {
             _canvasCoordinateSystem = cs;
             Console.WriteLine($"Calibrated coordinates:\n{_canvasCoordinateSystem}");

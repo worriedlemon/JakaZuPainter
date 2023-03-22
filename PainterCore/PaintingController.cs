@@ -10,8 +10,7 @@ namespace PainterCore
         public PaintingController()
         {
             const string ip = "192.168.1.100";
-            const int port = 10001;
-            _painter = new(ip, port);
+            _painter = new(ip);
 
             _palette = new();
 
@@ -43,16 +42,17 @@ namespace PainterCore
                 }
                 else
                 {
+                    CoordinateSystem2D cs;
                     if (input == "Y")
                     {
-                        CoordinateSystem2D loaded = Configuration.ConfigurationManager.LoadFromFile<CoordinateSystem2D>(_configPath)!;
-                        _painter.CalibrateSurface(loaded);
+                        cs = Configuration.ConfigurationManager.LoadFromFile<CoordinateSystem2D>(_configPath)!;
                     }
-                    else if (input == "N")
+                    else
                     {
-                        CoordinateSystem2D saved = _painter.CalibrateSurface();
-                        Configuration.ConfigurationManager.SaveToFile(saved, _configPath);
+                        cs = _painter.CalibrationBehavior.CalibrateSurface();
+                        Configuration.ConfigurationManager.SaveToFile(cs, _configPath);
                     }
+                    _painter.SetCalibrationSurface(cs);
                     break;
                 }
             }
