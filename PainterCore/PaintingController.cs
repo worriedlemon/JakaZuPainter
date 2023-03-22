@@ -1,5 +1,7 @@
 ﻿using JakaAPI.Types;
 using PainterArm;
+using System.Drawing;
+using System.Reflection;
 
 namespace PainterCore
 {
@@ -20,7 +22,7 @@ namespace PainterCore
         private Palette _palette;
         private RobotMixerDummy _mixer;
 
-        private ColorRGB _previousColor = new ColorRGB(0, 0, 0);
+        private ColorRGB _currentColor = new ColorRGB(0, 0, 0);
 
         const string _configPath = @"..\..\..\Configuration\calibration.json";
 
@@ -54,9 +56,8 @@ namespace PainterCore
                     break;
                 }
             }
-            
+
             //_painter.CalibrateBrushes();
-            //_painter.CalibrateWasher();
             //_painter.CalibrateDryer();
             //_palette.CalibratePalette();
 
@@ -71,7 +72,7 @@ namespace PainterCore
                     case CodeHPGL.IN:
                         break;
                     case CodeHPGL.PC:
-                        //BrushColor(command.Arguments);
+                        BrushColor(command.Arguments);
                         break;
                     case CodeHPGL.PW:
                         break;
@@ -94,7 +95,7 @@ namespace PainterCore
         private void BrushColor(double[] arguments)
         {
             ColorRGB color = new(arguments[1], arguments[2], arguments[3]);
-            
+
             if (_palette.IsColorAdded(color))
             {
                 if (_palette.GetStrokesLeft(color) == 0)
@@ -111,19 +112,31 @@ namespace PainterCore
 
             _palette.SubstractStroke(color);
 
-            if(color != _previousColor)
+            if (color != _currentColor)
             {
-                _painter.PutAsideBrush();
-                _painter.PickNewBrush();
+                if (_painter.CurrentBrush != -1)
+                {
+                    _painter.ReturnCurrentBrush();
+                }
+
+                _painter.MixWater();
+                _painter.PickNewBrush(0);
+                _painter.DryCurrentBrush();
             }
 
-            _previousColor = color;
+            _currentColor = color;
 
-            //_painter.DunkBrush(_palette.GetColorCoordinates(color));
+            _painter.DunkBrushInColor(_palette.GetColorCoordinates(color));
         }
 
         private void BrushMove(double[] arguments)
         {
+            if (_palette.GetStrokesLeft(_currentColor) == 0)
+            {
+                _palette.UpdateColor(_currentColor);
+                _mixer.MixColor(_palette.GetColorCoordinates(_currentColor), _currentColor);
+            }
+
             double x = arguments[0];
             double y = arguments[1];
             _painter.DrawLine(x, y);

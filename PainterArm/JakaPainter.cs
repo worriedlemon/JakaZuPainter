@@ -1,6 +1,7 @@
 ﻿using JakaAPI.Types;
 using JakaAPI.Types.Math;
 using JakaAPI;
+using System;
 
 namespace PainterArm
 {
@@ -12,10 +13,9 @@ namespace PainterArm
         private CoordinateSystem2D? _canvasCoordinateSystem;
 
         private Dictionary<int, CartesianPosition> _brushesLocations;
-        private CartesianPosition _washerLocation;
         private CartesianPosition _dryerLocation;
-
-        private int _currentBrush = -1;
+        private int _brushLength = 100;
+        public int CurrentBrush { get; private set; } = -1;
 
         /// <summary>
         /// Indicates whether the grip of the robot is being in grap state
@@ -37,7 +37,7 @@ namespace PainterArm
             byte complete = 0;
             Point zero = new(), axisX = new(), axisY = new();
             RPYMatrix canvasRPY = new(180, 0, 0);
-            
+
             Console.WriteLine("---- [Surface calibration] ----\n" +
                 "(1) Set zero pivot point\n" +
                 "(2) Set X-axis point\n" +
@@ -116,29 +116,6 @@ namespace PainterArm
         }
 
         /// <summary>
-        /// Washer calibration by a point
-        /// </summary>
-        public void CalibrateWasher()
-        {
-            Console.WriteLine("---- [Washer calibration] ----\n" +
-                "(1)Add washer location\n" +
-                "(0)End calibration");
-            while (true)
-            {
-                int option = Int32.Parse(Console.ReadLine());
-                switch (option)
-                {
-                    case 1:
-                        _washerLocation = GetRobotData().ArmCartesianPosition;
-                        break;
-                    case 0:
-                        return;
-                }
-            }
-
-        }
-
-        /// <summary>
         /// Dryer calibration by a point
         /// </summary>
         public void CalibrateDryer()
@@ -159,7 +136,7 @@ namespace PainterArm
                 }
             }
         }
-        
+
         /// <summary>
         /// Draw line with canvas 2D coordinates
         /// </summary>
@@ -173,18 +150,43 @@ namespace PainterArm
             MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.CanvasRPY), 10, 5, MovementType.Absolute);
         }
 
-        // Put current brush to [washer -> dryer -> active zone] cycle
-        public void PutAsideBrush()
+        // Create water vortex, not implemented yet
+        public void MixWater()
         {
-            //UpdateBrushesState();
+            Console.WriteLine("Water vortex start...");
+            Thread.Sleep(1000);
+            Console.WriteLine("Water vortex end...");
+        }
+
+        // Return current brush to stand
+        public void ReturnCurrentBrush()
+        {   
+            CartesianPosition brushPosition = _brushesLocations[CurrentBrush];
+            Point brushPoint = brushPosition.Point;
+            Point upperPoint = new Point(brushPoint.X, brushPoint.Y, brushPoint.Z + _brushLength);
+            RPYMatrix orthogonalRPY = brushPosition.Rpymatrix;
+
+            // Move to position above the brush
+            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
+
+            // Move to the brush on stand
+            MoveLinear(new CartesianPosition(brushPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
+
+            GripOff();
+
+            // Move to position above the stand again
+            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
+
+            CurrentBrush = -1;
         }
 
         // Pick new clear brush
-        public void PickNewBrush()
+        public void PickNewBrush(int num)
         {
-            CartesianPosition brushPosition = _brushesLocations[0];
+            CurrentBrush = num;
+            CartesianPosition brushPosition = _brushesLocations[num];
             Point brushPoint = brushPosition.Point;
-            Point upperPoint = new Point(brushPoint.X, brushPoint.Y, brushPoint.Z + 30);
+            Point upperPoint = new Point(brushPoint.X, brushPoint.Y, brushPoint.Z + _brushLength);
             RPYMatrix orthogonalRPY = brushPosition.Rpymatrix;
 
             // Move to position above the brush
@@ -192,23 +194,21 @@ namespace PainterArm
 
             GripOff();
 
-            // Move to brush on stand
+            // Move to the brush on stand
             MoveLinear(new CartesianPosition(brushPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
 
             GripOn();
 
-            // Move to position above the palete again
+            // Move to position above the stand again
             MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
-            //UpdateBrushesState();
         }
 
         // Dunk current brush it the palette color
-        public void DunkBrush(CartesianPosition colorPosition)
+        public void DunkBrushInColor(CartesianPosition colorPosition)
         {
             Point colorPoint = colorPosition.Point;
-            Point upperPoint = new Point(colorPoint.X, colorPoint.Y, colorPoint.Z + 30);
-            // Grip position, orthogonal to the palette surface
-            RPYMatrix orthogonalRPY = new RPYMatrix(-180, 0, 0);
+            Point upperPoint = new Point(colorPoint.X, colorPoint.Y, colorPoint.Z + _brushLength);
+            RPYMatrix orthogonalRPY = colorPosition.Rpymatrix;
 
             // Move to position above the palete
             MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 10, 5, MovementType.Absolute);
@@ -218,6 +218,29 @@ namespace PainterArm
 
             // Move to position above the palete again
             MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 10, 5, MovementType.Absolute);
+        }
+
+        public void DryCurrentBrush()
+        {
+            Point dryerPoint = _dryerLocation.Point;
+            Point upperPoint = new Point(dryerPoint.X, dryerPoint.Y, dryerPoint.Z + _brushLength);
+            RPYMatrix orthogonalRPY = _dryerLocation.Rpymatrix;
+
+            // Move to position above the dryer
+            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
+
+            // Move to dryer
+            MoveLinear(new CartesianPosition(dryerPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
+
+            int rotationCount = 3;
+            for (int i = 0; i < rotationCount; i++)
+            {
+                double c = Math.Pow(-1, i);
+                JointMove(new JointsPosition(0, 0, 0, 0, 0, c * 15), 100, 25, MovementType.Relative);
+            }
+
+            // Move to position above the dryer again
+            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
         }
 
         // Grip methods
