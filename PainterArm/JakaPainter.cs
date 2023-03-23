@@ -12,26 +12,35 @@ namespace PainterArm
     public class JakaPainter : JakaRobot
     {
         private CoordinateSystem2D? _canvasCoordinateSystem;
+        private double _currentX, _currentY, _currentHeight;
 
         private Dictionary<int, CartesianPosition> _brushesLocations;
         private CartesianPosition _dryerLocation;
-        private int _brushLength = 100;
-        public int CurrentBrush { get; private set; } = -1;
+        private int _brushLength;
+        public int CurrentBrush { get; private set; }
 
         /// <summary>
         /// Indicates whether the grip of the robot is being in grap state
         /// </summary>
         private bool _grip;
 
-        public AbstractCalibrationBehavior CalibrationBehavior;
+        public AbstractCalibrationBehavior CanvasCalibrationBehavior;
+
+        public ref CoordinateSystem2D? GetCanvasCoordinateSystemReference() => ref _canvasCoordinateSystem;
 
         public JakaPainter(string domain, int portSending = 10001, int portListening = 10000)
             : base(domain, portSending, portListening)
         {
             _brushesLocations = new Dictionary<int, CartesianPosition>();
             _grip = false;
+            _currentX = 0;
+            _currentY = 0;
+            _currentHeight = 0;
+            _brushLength = 100;
+
+            CurrentBrush = -1;
             SetDOState(0, 0, _grip);
-            CalibrationBehavior = new ManualCalibration(this);
+            CanvasCalibrationBehavior = new ManualCalibration(this);
         }
 
         /// <summary>
@@ -50,6 +59,7 @@ namespace PainterArm
         public void CalibrateBrushes()
         {
             Console.WriteLine("(1) Add new brush location\n(0) End calibration");
+            //Dictionary<int, CartesianPosition> brushesLocations = new();
 
             while (true)
             {
@@ -60,7 +70,7 @@ namespace PainterArm
                         _brushesLocations.Add(_brushesLocations.Count, GetRobotData().ArmCartesianPosition);
                         break;
                     case 0:
-                        return;
+                        return /*brushesLocations*/;
                 }
             }
         }
@@ -92,10 +102,10 @@ namespace PainterArm
         /// <param name="y">Y-axis offset in millimeters</param>
         public void DrawLine(double x, double y)
         {
-            Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(x, y);
+            Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX = x, _currentY = y, _currentHeight);
             Console.WriteLine(point3d);
 
-            MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.CanvasRPY), 100, 25, MovementType.Absolute);
+            MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), 100, 25, MovementType.Absolute);
         }
 
         // Create water vortex, not implemented yet
@@ -104,6 +114,12 @@ namespace PainterArm
             Console.WriteLine("Water vortex start...");
             Thread.Sleep(1000);
             Console.WriteLine("Water vortex end...");
+        }
+
+        public void BrushOrthogonal(double height)
+        {
+            Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX, _currentY, _currentHeight = height);
+            MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), 100, 25, MovementType.Absolute);
         }
 
         // Return current brush to stand
@@ -183,6 +199,7 @@ namespace PainterArm
             int rotationCount = 3;
             for (int i = 0; i < rotationCount; i++)
             {
+                //double c = (i % 2) * 2 - 1;
                 double c = Math.Pow(-1, i);
                 JointMove(new JointsPosition(0, 0, 0, 0, 0, c * 30), 100, 100, MovementType.Relative);
             }

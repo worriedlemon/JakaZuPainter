@@ -116,7 +116,7 @@ namespace PainterCore
         private CartesianPosition GetAvaliableLocation()
         {
             if (_coordinateSystem == null) throw new InvalidOperationException("Pallete is not calibrated yet");
-            return new CartesianPosition(_coordinateSystem.Zero, _coordinateSystem.CanvasRPY);
+            return new CartesianPosition(_coordinateSystem.Zero, _coordinateSystem.RPYParameters);
         }
     }
 }

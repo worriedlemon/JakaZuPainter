@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 namespace PainterArm
 {
     /// <summary>
-    /// Structure for representing a canvas coordinate system
+    /// Structure for representing a 2-dimentional coordinate system
     /// </summary>
     public class CoordinateSystem2D
     {
@@ -12,27 +12,45 @@ namespace PainterArm
         public Point Zero, AxisX, AxisY;
 
         [JsonInclude]
-        public RPYMatrix CanvasRPY;
+        public RPYMatrix RPYParameters;
 
-        private readonly Vector3 _axisX, _axisY;
-        private readonly double _maxX, _maxY;
+        private Vector3 _axisX, _axisY, _zShift;
+        private double _maxX, _maxY;
 
-        [JsonIgnore]
-        private Vector3? _zShift;
+        public double UnitsPerMillimeter
+        {
+            get
+            {
+                return _upm;
+            }
+            set
+            {
+                double coeff = _upm / value;
+                _axisX *= coeff;
+                _axisY *= coeff;
+                _zShift *= coeff;
+                _maxX /= coeff;
+                _maxY /= coeff;
+                _upm = value;
+            }
+        }
+
+        private double _upm = 1;
 
         /// <summary>
         /// Constructor for creating a new coordinate system in two dimentions (2D) based on 3 points
         /// </summary>
-        /// <param name="zero"></param>
-        /// <param name="axisX"></param>
-        /// <param name="axisY"></param>
+        /// <param name="zero">Point, representing the origin of the coordinate system</param>
+        /// <param name="axisX">Point in the direction of X-axis</param>
+        /// <param name="axisY">Point in the direction of Y-axis</param>
+        /// <param name="RPYparameters">Rotation parameters of the grip</param>
         [JsonConstructor]
-        public CoordinateSystem2D(Point zero, Point axisX, Point axisY, RPYMatrix canvasRpy)
+        public CoordinateSystem2D(Point zero, Point axisX, Point axisY, RPYMatrix RPYparameters, double unitsPerMillimeter = 1)
         {
             Zero = zero;
             AxisX = axisX;
             AxisY = axisY;
-            CanvasRPY = canvasRpy;
+            RPYParameters = RPYparameters;
 
             _axisX = (Vector3)AxisX - (Vector3)Zero;
             _maxX = _axisX.Length();
@@ -41,44 +59,22 @@ namespace PainterArm
             _maxY = _axisY.Length();
             _axisY /= _maxY;
 
-            _zShift = null;
-        }
-
-        /// <summary>
-        /// Function for enabling a Z-axis shifting (orthogonal to X and Y)
-        /// </summary>
-        /// <exception cref="InvalidOperationException"></exception>
-        public void UseZShifting()
-        {
             _zShift = Vector3.VectorProduct(_axisX, _axisY, false);
+            UnitsPerMillimeter = unitsPerMillimeter;
         }
 
         /// <summary>
         /// Converts a canvas point into world point using calibration points
         /// </summary>
-        /// <param name="x">X position on a canvas in millimeters</param>
-        /// <param name="y">Y position on a canvas in millimeters</param>
-        /// <returns>A world <see cref="Point"/> of a canvas point for robot to understand its position</returns>
-        /// <exception cref="ArgumentException"></exception>
-        public Point CanvasPointToWorldPoint(double x, double y)
-        {
-            if (!(x >= 0 && x <= _maxX || y >= 0 && y <= _maxY)) throw new ArgumentException("X or Y out of field");
-            return (Point)((Vector3)Zero + _axisX * x + _axisY * y);
-        }
-
-        /// <summary>
-        /// Converts a canvas point into world point using calibration points (including Z-shifting)
-        /// </summary>
-        /// <param name="x">X position on a canvas in millimeters</param>
-        /// <param name="y">Y position on a canvas in millimeters</param>
+        /// <param name="x">X position on a canvas in units</param>
+        /// <param name="y">Y position on a canvas in units</param>
         /// <param name="z">Z shifting perpendicular to canvas</param>
         /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
         /// <exception cref="ArgumentException"></exception>
-        public Point CanvasPointToWorldPoint(double x, double y, double z)
+        public Point CanvasPointToWorldPoint(double x, double y, double z = 0)
         {
-            if (_zShift == null) throw new InvalidOperationException("Z is not used in this context");
-            return (Point)((Vector3)CanvasPointToWorldPoint(x, y) + (_zShift * z));
+            if (!(x >= 0 && x <= _maxX || y >= 0 && y <= _maxY)) throw new ArgumentException("X or Y out of field");
+            return (Point)((Vector3)Zero + _axisX * x + _axisY * y + _zShift * z);
         }
 
         public override string ToString()

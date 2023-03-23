@@ -1,4 +1,5 @@
-﻿using PainterArm;
+﻿using JakaAPI.Types.Math;
+using PainterArm;
 
 namespace PainterCore
 {
@@ -6,7 +7,7 @@ namespace PainterCore
     {
         public PaintingController()
         {
-            const string ip = "192.168.1.100";
+            const string ip = "192.168.1.101";
 
             _painter = new(ip);
             _palette = new(_painter);
@@ -19,40 +20,11 @@ namespace PainterCore
 
         private ColorRGB _currentColor = new(0, 0, 0);
 
-        const string _canvasConfigPath = @"..\..\..\Configuration\canvas_calibration.json";
-
         public void Start()
         {
             InitPainter();
 
-            while (true)
-            {
-                Console.WriteLine("Load previous canvas calibration configuration? [Y/N]");
-                Console.Write("> ");
-                string input = Console.ReadLine();
-
-                if (!(input == "Y" || input == "N"))
-                {
-                    Console.WriteLine("Unknown response. Try again.");
-                    Console.Write("> ");
-                }
-                else
-                {
-                    CoordinateSystem2D cs;
-                    if (input == "Y")
-                    {
-                        cs = Configuration.ConfigurationManager.LoadFromFile<CoordinateSystem2D>(_canvasConfigPath)!;
-                    }
-                    else
-                    {
-                        Console.WriteLine("---- [Canvas calibration] ----\n");
-                        cs = _painter.CalibrationBehavior.Calibrate();
-                        Configuration.ConfigurationManager.SaveToFile(cs, _canvasConfigPath);
-                    }
-                    _painter.SetCalibrationSurface(cs);
-                    break;
-                }
-            }
+            CalibrationDialog(ref _painter.GetCanvasCoordinateSystemReference(), _painter.CanvasCalibrationBehavior.Calibrate, @"..\..\..\Configuration\canvas_calibration.json", "Canvas calibration");
 
             Console.WriteLine("---- [Brushes calibration] ----\n");
             _painter.CalibrateBrushes();
@@ -82,8 +54,11 @@ namespace PainterCore
                     case CodeHPGL.PW:
                         break;
                     case CodeHPGL.PU:
+                        _painter.BrushOrthogonal(100);
+                        BrushMove(command.Arguments);
                         break;
                     case CodeHPGL.PD:
+                        _painter.BrushOrthogonal(0);
                         BrushMove(command.Arguments);
                         break;
                 }
@@ -95,6 +70,45 @@ namespace PainterCore
 
             Console.WriteLine("\nPress any button to exit the program...");
             Console.ReadKey();
+        }
+
+        /// <summary>
+        /// Experimental function on loading and saving calibration settings of different devices
+        /// </summary>
+        /// <typeparam name="T">Data structure of device calibration configuration</typeparam>
+        /// <param name="loadableObject">Object, where the calibration is being used</param>
+        /// <param name="actionOnCalibrate">Function, which is invoked for calibration</param>
+        /// <param name="configPath">Path to save file</param>
+        /// <param name="configName">Headline of current dialog</param>
+        private static void CalibrationDialog<T>(ref T loadableObject, Func<T> actionOnCalibrate, string configPath, string configName = "Calibration")
+        {
+            while (true)
+            {
+                Console.WriteLine($"---- [{configName}] ----\n");
+                Console.WriteLine("Load previous configuration? [Y/N]");
+                Console.Write("> ");
+                string input = Console.ReadLine();
+
+                if (!(input == "Y" || input == "N"))
+                {
+                    Console.WriteLine("Unknown response. Try again.");
+                    Console.Write("> ");
+                }
+                else
+                {
+                    if (input == "Y")
+                    {
+                        loadableObject = Configuration.ConfigurationManager.LoadFromFile<T>(configPath)!;
+                    }
+                    else
+                    {
+                        loadableObject = actionOnCalibrate.Invoke();
+                        Configuration.ConfigurationManager.SaveToFile(loadableObject, configPath);
+                    }
+                    break;
+                }
+            }
+            Console.WriteLine();
         }
 
         private void BrushColor(double[] arguments)
@@ -142,10 +156,9 @@ namespace PainterCore
                 _mixer.MixColor(_palette.GetColorCoordinates(_currentColor), _currentColor);
             }
 
-            double x = arguments[0];
-            double y = arguments[1];
-            _painter.DrawLine(x, y);
+            _painter.DrawLine(arguments[0], arguments[1]);
         }
+
 
         private void InitPainter()
         {
