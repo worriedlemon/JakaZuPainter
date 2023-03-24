@@ -8,9 +8,9 @@
         /// <summary>
         /// Painter Arm, which should be calibrated
         /// </summary>
-        public JakaPainter PainterArm { get; private set; }
+        public JakaPainter PainterArm { get; }
 
-        public AbstractCalibrationBehavior(JakaPainter painter)
+        public AbstractCalibrationBehavior(in JakaPainter painter)
         {
             PainterArm = painter;
         }
@@ -18,7 +18,7 @@
         /// <summary>
         /// Function for calibrating surface
         /// </summary>
-        /// <returns>Calibrated surface as <see cref="CoordinateSystem2D"/></returns>
-        public abstract CoordinateSystem2D Calibrate();
+        /// <returns>Calibrated surface as <see cref="ICalibratable"/></returns>
+        public abstract ICalibratable Calibrate();
     }
 }

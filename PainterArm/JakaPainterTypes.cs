@@ -1,4 +1,5 @@
 ﻿using JakaAPI.Types.Math;
+using PainterArm.Calibration;
 using System.Text.Json.Serialization;
 
 namespace PainterArm
@@ -6,7 +7,7 @@ namespace PainterArm
     /// <summary>
     /// Structure for representing a 2-dimentional coordinate system
     /// </summary>
-    public class CoordinateSystem2D
+    public class CoordinateSystem2D : ICalibratable
     {
         [JsonInclude]
         public Point Zero, AxisX, AxisY;
@@ -82,4 +83,9 @@ namespace PainterArm
             return $"Zero: {Zero}\nAxisX: {AxisX}\nAxisY: {AxisY}";
         }
     }
+
+    /// <summary>
+    /// Workaround structure for making location dictionary (of types <see cref="int"/> and <see cref="CartesianPosition"/>) possible to save and load
+    /// </summary>
+    public class LocationDictionary : Dictionary<int, CartesianPosition>, ICalibratable { }
 }

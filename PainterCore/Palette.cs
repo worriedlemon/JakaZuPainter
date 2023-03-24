@@ -71,18 +71,18 @@ namespace PainterCore
         
         private JakaPainter _painter;
         private CoordinateSystem2D? _coordinateSystem;
-        private AbstractCalibrationBehavior _calibrationBehavior;
+        public AbstractCalibrationBehavior CalibrationBehavior;
 
         public Palette(JakaPainter painterArm)
         {
             _colorsLocations = new Dictionary<ColorRGB, CartesianPosition>();
             _strokesRemaining = new Dictionary<ColorRGB, int>();
             _painter = painterArm;
-            _calibrationBehavior = new ManualCalibration(_painter);
+            CalibrationBehavior = new ManualThreePointCalibration(_painter);
         }
 
         // Calibration function, set Palette to PainterArm coordinated + Gives it allowed borders for color adding
-        public void CalibratePalette() => _coordinateSystem = _calibrationBehavior.Calibrate();
+        public void CalibratePalette(CoordinateSystem2D paletteCoordinates) => _coordinateSystem = paletteCoordinates;
 
         public bool IsColorAdded(ColorRGB color) => _colorsLocations.ContainsKey(color);
 

@@ -5,13 +5,13 @@ namespace PainterArm.Calibration
     /// <summary>
     /// Manual surface calibration by three points
     /// </summary>
-    public class ManualCalibration : AbstractCalibrationBehavior
+    public class ManualThreePointCalibration : AbstractCalibrationBehavior
     {
         /// <summary>
         /// Constructor for initializing manual surface calibration
         /// </summary>
         /// <param name="painterArm"></param>
-        public ManualCalibration(JakaPainter painterArm) : base(painterArm) { }
+        public ManualThreePointCalibration(in JakaPainter painterArm) : base(painterArm) { }
 
         public override CoordinateSystem2D Calibrate()
         {

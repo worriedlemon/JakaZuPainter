@@ -2,7 +2,6 @@
 using JakaAPI.Types.Math;
 using JakaAPI;
 using PainterArm.Calibration;
-using System;
 
 namespace PainterArm
 {
@@ -14,9 +13,9 @@ namespace PainterArm
         private CoordinateSystem2D? _canvasCoordinateSystem;
         private double _currentX, _currentY, _currentHeight;
 
-        private Dictionary<int, CartesianPosition> _brushesLocations;
+        private LocationDictionary _brushesLocations;
         private CartesianPosition _dryerLocation;
-        private int _brushLength;
+        private const int _brushLength = 100;
         public int CurrentBrush { get; private set; }
 
         /// <summary>
@@ -24,76 +23,39 @@ namespace PainterArm
         /// </summary>
         private bool _grip;
 
-        public AbstractCalibrationBehavior CanvasCalibrationBehavior;
-
-        public ref CoordinateSystem2D? GetCanvasCoordinateSystemReference() => ref _canvasCoordinateSystem;
+        public AbstractCalibrationBehavior CanvasCalibrationBehavior, BrushesCalibrationBehavior, DryerCalibrationBehavior;
 
         public JakaPainter(string domain, int portSending = 10001, int portListening = 10000)
             : base(domain, portSending, portListening)
         {
-            _brushesLocations = new Dictionary<int, CartesianPosition>();
+            _brushesLocations = new LocationDictionary();
             _grip = false;
             _currentX = 0;
             _currentY = 0;
             _currentHeight = 0;
-            _brushLength = 100;
 
             CurrentBrush = -1;
             SetDOState(0, 0, _grip);
-            CanvasCalibrationBehavior = new ManualCalibration(this);
+            CanvasCalibrationBehavior = new ManualThreePointCalibration(this);
+            DryerCalibrationBehavior = new ManualOnePointCalibration(this);
+            BrushesCalibrationBehavior = new ManualOnePointCalibration(this);
         }
 
         /// <summary>
         /// Canvas calibration based on existing <see cref="CoordinateSystem2D"/>
         /// </summary>
         /// <param name="cs">Existing coordinate system to be used as canvas</param>
-        public void SetCalibrationSurface(CoordinateSystem2D cs)
-        {
-            _canvasCoordinateSystem = cs;
-            Console.WriteLine($"Calibrated coordinates:\n{_canvasCoordinateSystem}");
-        }
+        public void CalibrateCanvas(CoordinateSystem2D cs) => _canvasCoordinateSystem = cs;
 
         /// <summary>
-        /// Brushes calibration by a point
+        /// Brushes calibration
         /// </summary>
-        public void CalibrateBrushes()
-        {
-            Console.WriteLine("(1) Add new brush location\n(0) End calibration");
-            //Dictionary<int, CartesianPosition> brushesLocations = new();
-
-            while (true)
-            {
-                int option = Int32.Parse(Console.ReadLine());
-                switch (option)
-                {
-                    case 1:
-                        _brushesLocations.Add(_brushesLocations.Count, GetRobotData().ArmCartesianPosition);
-                        break;
-                    case 0:
-                        return /*brushesLocations*/;
-                }
-            }
-        }
+        public void CalibrateBrushes(LocationDictionary locations) => _brushesLocations = locations;
 
         /// <summary>
-        /// Dryer calibration by a point
+        /// Dryer calibration
         /// </summary>
-        public void CalibrateDryer()
-        {
-            Console.WriteLine("(1) Add dryer location\n(0) End calibration");
-            while (true)
-            {
-                int option = Int32.Parse(Console.ReadLine());
-                switch (option)
-                {
-                    case 1:
-                        _dryerLocation = GetRobotData().ArmCartesianPosition;
-                        break;
-                    case 0:
-                        return;
-                }
-            }
-        }
+        public void CalibrateDryer(CartesianPosition location) => _dryerLocation = location;
 
         /// <summary>
         /// Draw line with canvas 2D coordinates

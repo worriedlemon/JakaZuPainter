@@ -1,5 +1,4 @@
-﻿using JakaAPI.Types.Math;
-using PainterArm;
+﻿using PainterArm;
 
 namespace PainterCore
 {
@@ -23,18 +22,8 @@ namespace PainterCore
         public void Start()
         {
             InitPainter();
-
-            CalibrationDialog(ref _painter.GetCanvasCoordinateSystemReference(), _painter.CanvasCalibrationBehavior.Calibrate, @"..\..\..\Configuration\canvas_calibration.json", "Canvas calibration");
-
-            Console.WriteLine("---- [Brushes calibration] ----\n");
-            _painter.CalibrateBrushes();
-
-            Console.WriteLine("---- [Dryer calibration] ----\n");
-            _painter.CalibrateDryer();
-
-            Console.WriteLine("---- [Pallete calibration] ----\n");
-            _palette.CalibratePalette();
-
+            CalibrateAllDevices();
+            
             Console.WriteLine("Calibration ended. Press any key to continue...");
             Console.ReadKey();
 
@@ -72,43 +61,35 @@ namespace PainterCore
             Console.ReadKey();
         }
 
-        /// <summary>
-        /// Experimental function on loading and saving calibration settings of different devices
-        /// </summary>
-        /// <typeparam name="T">Data structure of device calibration configuration</typeparam>
-        /// <param name="loadableObject">Object, where the calibration is being used</param>
-        /// <param name="actionOnCalibrate">Function, which is invoked for calibration</param>
-        /// <param name="configPath">Path to save file</param>
-        /// <param name="configName">Headline of current dialog</param>
-        private static void CalibrationDialog<T>(ref T loadableObject, Func<T> actionOnCalibrate, string configPath, string configName = "Calibration")
+        private void CalibrateAllDevices()
         {
-            while (true)
-            {
-                Console.WriteLine($"---- [{configName}] ----\n");
-                Console.WriteLine("Load previous configuration? [Y/N]");
-                Console.Write("> ");
-                string input = Console.ReadLine();
+            // Canvas calibration
+            Configuration.ConfigurationManager.CalibrationDialog(out CoordinateSystem2D canvasCoordinateSystem,
+                _painter.CanvasCalibrationBehavior,
+                @"..\..\..\Configuration\canvas_calibration.json",
+                "Canvas calibration");
+            _painter.CalibrateCanvas(canvasCoordinateSystem);
 
-                if (!(input == "Y" || input == "N"))
-                {
-                    Console.WriteLine("Unknown response. Try again.");
-                    Console.Write("> ");
-                }
-                else
-                {
-                    if (input == "Y")
-                    {
-                        loadableObject = Configuration.ConfigurationManager.LoadFromFile<T>(configPath)!;
-                    }
-                    else
-                    {
-                        loadableObject = actionOnCalibrate.Invoke();
-                        Configuration.ConfigurationManager.SaveToFile(loadableObject, configPath);
-                    }
-                    break;
-                }
-            }
-            Console.WriteLine();
+            // Brushes calibration
+            Configuration.ConfigurationManager.CalibrationDialog(out LocationDictionary brushesLocations,
+                _painter.BrushesCalibrationBehavior,
+                @"..\..\..\Configuration\brushes_calibration.json",
+                "Brushes calibration");
+            _painter.CalibrateBrushes(brushesLocations);
+
+            // Dryer calibration
+            Configuration.ConfigurationManager.CalibrationDialog(out LocationDictionary dryerLocations,
+                _painter.DryerCalibrationBehavior,
+                @"..\..\..\Configuration\dryer_calibration.json",
+                "Dryer calibration");
+            _painter.CalibrateDryer(dryerLocations[dryerLocations.Count - 1]);
+
+            // Palette calibration
+            Configuration.ConfigurationManager.CalibrationDialog(out CoordinateSystem2D paletteCoordinateSystem,
+                _palette.CalibrationBehavior,
+                @"..\..\..\Configuration\palette_calibration.json",
+                "Palette calibration");
+            _palette.CalibratePalette(paletteCoordinateSystem);
         }
 
         private void BrushColor(double[] arguments)

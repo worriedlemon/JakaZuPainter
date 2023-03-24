@@ -1,6 +1,4 @@
-﻿using PainterArm;
-
-namespace PainterCore
+﻿namespace PainterCore
 {
     internal class Program
     {
