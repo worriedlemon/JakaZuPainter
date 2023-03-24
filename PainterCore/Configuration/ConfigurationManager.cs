@@ -70,8 +70,7 @@ namespace PainterCore.Configuration
                     }
                     else
                     {
-                        if (calibrationBehavior.Calibrate() is not T calibratedObject) throw new InvalidCastException($"ICalibratable cannot be interpreted as {nameof(T)}");
-                        loadableObject = calibratedObject;
+                        loadableObject = (calibrationBehavior.Calibrate() as T)!;
                         SaveToFile(loadableObject, configPath);
                     }
                     break;

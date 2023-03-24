@@ -1,6 +1,4 @@
-﻿using JakaAPI.Types.Math;
-
-namespace PainterArm.Calibration
+﻿namespace PainterArm.Calibration
 {
     public class ManualOnePointCalibration : AbstractCalibrationBehavior
     {

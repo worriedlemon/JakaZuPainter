@@ -87,5 +87,16 @@ namespace PainterArm
     /// <summary>
     /// Workaround structure for making location dictionary (of types <see cref="int"/> and <see cref="CartesianPosition"/>) possible to save and load
     /// </summary>
-    public class LocationDictionary : Dictionary<int, CartesianPosition>, ICalibratable { }
+    public class LocationDictionary : Dictionary<int, CartesianPosition>, ICalibratable
+    {
+        public override string ToString()
+        {
+            string representation = "";
+            foreach (var pair in this)
+            {
+                representation += $"Location {pair.Key}: {pair.Value}\n";
+            }
+            return representation;
+        }
+    }
 }
