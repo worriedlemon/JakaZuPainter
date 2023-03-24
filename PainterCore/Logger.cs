@@ -16,15 +16,14 @@
         private string CreateUniqueFileName()
         {
             DateTime currentDate = DateTime.Now.Date;
-
-            string[] files = Directory.GetFiles(_path, currentDate.ToString("dd-MM-yyyy-*.log"));
-
+            string[] files = Directory.GetFiles(_path, currentDate.ToString("dd-MM-yyyy") + "-*.log");
             int logFileNumber = 1;
 
             if (files.Length > 0)
             {
                 foreach (string file in files)
                 {
+                    Console.WriteLine("found: " + file);
                     string fileName = Path.GetFileNameWithoutExtension(file);
                     int fileNumber = int.Parse(fileName.Substring(11)); // 11 - length of "dd-MM-yyyy-" name base
                     logFileNumber = Math.Max(logFileNumber, fileNumber);

@@ -16,7 +16,11 @@ namespace PainterArm
         public RPYMatrix RPYParameters;
 
         private Vector3 _axisX, _axisY, _zShift;
-        private double _maxX, _maxY;
+
+        [JsonIgnore]
+        public double MaxX { get; private set; }
+        [JsonIgnore]
+        public double MaxY { get; private set; }
 
         public double UnitsPerMillimeter
         {
@@ -30,8 +34,8 @@ namespace PainterArm
                 _axisX *= coeff;
                 _axisY *= coeff;
                 _zShift *= coeff;
-                _maxX /= coeff;
-                _maxY /= coeff;
+                MaxX /= coeff;
+                MaxY /= coeff;
                 _upm = value;
             }
         }
@@ -54,11 +58,11 @@ namespace PainterArm
             RPYParameters = RPYparameters;
 
             _axisX = (Vector3)AxisX - (Vector3)Zero;
-            _maxX = _axisX.Length();
-            _axisX /= _maxX;
+            MaxX = _axisX.Length();
+            _axisX /= MaxX;
             _axisY = (Vector3)AxisY - (Vector3)Zero;
-            _maxY = _axisY.Length();
-            _axisY /= _maxY;
+            MaxY = _axisY.Length();
+            _axisY /= MaxY;
 
             _zShift = Vector3.VectorProduct(_axisX, _axisY, false);
             UnitsPerMillimeter = unitsPerMillimeter;
@@ -74,7 +78,7 @@ namespace PainterArm
         /// <exception cref="ArgumentException"></exception>
         public Point CanvasPointToWorldPoint(double x, double y, double z = 0)
         {
-            if (!(x >= 0 && x <= _maxX || y >= 0 && y <= _maxY)) throw new ArgumentException("X or Y out of field");
+            if (!(x >= 0 && x <= MaxX || y >= 0 && y <= MaxY)) throw new ArgumentException("X or Y out of field");
             return (Point)((Vector3)Zero + _axisX * x + _axisY * y + _zShift * z);
         }
 

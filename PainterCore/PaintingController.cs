@@ -12,11 +12,13 @@ namespace PainterCore
             _painter = new(ip);
             _palette = new(_painter);
             _mixer = new();
+            _logger = new();
         }
 
         private readonly JakaPainter _painter;
         private readonly Palette _palette;
         private readonly RobotMixerDummy _mixer;
+        private readonly Logger _logger;
 
         private ColorRGB _currentColor = new(0, 0, 0);
 
@@ -25,8 +27,7 @@ namespace PainterCore
             InitPainter();
             CalibrateAllDevices();
             
-            Logger logger = new();
-            _painter.DebugSubscribe(logger.LogMessage);
+            _painter.DebugSubscribe(_logger.LogMessage);
 
             Console.WriteLine("Calibration ended. Press any key to continue...");
             Console.ReadKey();
