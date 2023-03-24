@@ -65,8 +65,6 @@ namespace PainterArm
         public void DrawLine(double x, double y)
         {
             Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX = x, _currentY = y, _currentHeight);
-            Console.WriteLine(point3d);
-
             MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), 100, 25, MovementType.Absolute);
         }
 
@@ -78,13 +76,19 @@ namespace PainterArm
             Console.WriteLine("Water vortex end...");
         }
 
-        public void BrushOrthogonal(double height)
+        /// <summary>
+        /// Move the brush perpendicular to the canvas
+        /// </summary>
+        /// <param name="height">Z-axis offset</param>
+        public void BrushOrthogonalMove(double height)
         {
             Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX, _currentY, _currentHeight = height);
             MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), 100, 25, MovementType.Absolute);
         }
 
-        // Return current brush to stand
+        /// <summary>
+        /// Returns current held brush to the stand
+        /// </summary>
         public void ReturnCurrentBrush()
         {   
             CartesianPosition brushPosition = _brushesLocations[CurrentBrush];
@@ -106,7 +110,9 @@ namespace PainterArm
             CurrentBrush = -1;
         }
 
-        // Pick new clear brush
+        /// <summary>
+        /// Returns current held brush to the stand
+        /// </summary>
         public void PickNewBrush(int num)
         {
             CurrentBrush = num;

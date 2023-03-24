@@ -50,33 +50,28 @@ namespace PainterCore.Configuration
         public static void CalibrationDialog<T>(out T loadableObject, AbstractCalibrationBehavior calibrationBehavior, string configPath, string configName = "Calibration")
             where T : class, ICalibratable
         {
+            Console.WriteLine($"---- [{configName}] ----\n");
+            Console.WriteLine("Load previous configuration? [Y/N]");
+            Console.Write("> ");
+
             while (true)
             {
-                Console.WriteLine($"---- [{configName}] ----\n");
-                Console.WriteLine("Load previous configuration? [Y/N]");
                 Console.Write("> ");
-                string input = Console.ReadLine();
-
-                if (!(input == "Y" || input == "N"))
+                switch (Console.ReadLine())
                 {
-                    Console.WriteLine("Unknown response. Try again.");
-                    Console.Write("> ");
-                }
-                else
-                {
-                    if (input == "Y")
-                    {
+                    case "Y":
                         loadableObject = LoadFromFile<T>(configPath)!;
-                    }
-                    else
-                    {
+                        return;
+                    case "N":
                         loadableObject = (calibrationBehavior.Calibrate() as T)!;
                         SaveToFile(loadableObject, configPath);
-                    }
-                    break;
+                        return;
+                    default:
+                        Console.WriteLine("Unknown response. Try again.");
+                        break;
                 }
+                Console.WriteLine();
             }
-            Console.WriteLine();
         }
     }
 }

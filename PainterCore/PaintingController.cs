@@ -1,4 +1,5 @@
 ﻿using PainterArm;
+using PainterCore.Configuration;
 
 namespace PainterCore
 {
@@ -24,6 +25,9 @@ namespace PainterCore
             InitPainter();
             CalibrateAllDevices();
             
+            Logger logger = new();
+            _painter.DebugSubscribe(logger.LogMessage);
+
             Console.WriteLine("Calibration ended. Press any key to continue...");
             Console.ReadKey();
 
@@ -31,7 +35,7 @@ namespace PainterCore
 
             foreach (CommandHPGL command in commands.GetNextCommand())
             {
-                Console.WriteLine("Executing: " + command);
+                Console.WriteLine($"Executing: {command}");
 
                 switch (command.Code)
                 {
@@ -43,11 +47,11 @@ namespace PainterCore
                     case CodeHPGL.PW:
                         break;
                     case CodeHPGL.PU:
-                        _painter.BrushOrthogonal(100);
+                        _painter.BrushOrthogonalMove(100);
                         BrushMove(command.Arguments);
                         break;
                     case CodeHPGL.PD:
-                        _painter.BrushOrthogonal(0);
+                        _painter.BrushOrthogonalMove(0);
                         BrushMove(command.Arguments);
                         break;
                 }
@@ -64,28 +68,28 @@ namespace PainterCore
         private void CalibrateAllDevices()
         {
             // Canvas calibration
-            Configuration.ConfigurationManager.CalibrationDialog(out CoordinateSystem2D canvasCoordinateSystem,
+            ConfigurationManager.CalibrationDialog(out CoordinateSystem2D canvasCoordinateSystem,
                 _painter.CanvasCalibrationBehavior,
                 @"..\..\..\Configuration\canvas_calibration.json",
                 "Canvas calibration");
             _painter.CalibrateCanvas(canvasCoordinateSystem);
 
             // Brushes calibration
-            Configuration.ConfigurationManager.CalibrationDialog(out LocationDictionary brushesLocations,
+            ConfigurationManager.CalibrationDialog(out LocationDictionary brushesLocations,
                 _painter.BrushesCalibrationBehavior,
                 @"..\..\..\Configuration\brushes_calibration.json",
                 "Brushes calibration");
             _painter.CalibrateBrushes(brushesLocations);
 
             // Dryer calibration
-            Configuration.ConfigurationManager.CalibrationDialog(out LocationDictionary dryerLocations,
+            ConfigurationManager.CalibrationDialog(out LocationDictionary dryerLocations,
                 _painter.DryerCalibrationBehavior,
                 @"..\..\..\Configuration\dryer_calibration.json",
                 "Dryer calibration");
             _painter.CalibrateDryer(dryerLocations[dryerLocations.Count - 1]);
 
             // Palette calibration
-            Configuration.ConfigurationManager.CalibrationDialog(out CoordinateSystem2D paletteCoordinateSystem,
+            ConfigurationManager.CalibrationDialog(out CoordinateSystem2D paletteCoordinateSystem,
                 _palette.CalibrationBehavior,
                 @"..\..\..\Configuration\palette_calibration.json",
                 "Palette calibration");
@@ -140,17 +144,15 @@ namespace PainterCore
             _painter.DrawLine(arguments[0], arguments[1]);
         }
 
-
         private void InitPainter()
         {
             _painter.PowerOn();
             _painter.EnableRobot();
-            //_painter.GripOff();
         }
 
         private void DisablePainter()
         {
-            //_painter.GripOff();
+            _painter.GripOff();
             _painter.DisableRobot();
             _painter.PowerOff();
         }

@@ -20,7 +20,7 @@
                     case 0:
                         return locations;
                 }
-            };
+            }
         }
     }
 }

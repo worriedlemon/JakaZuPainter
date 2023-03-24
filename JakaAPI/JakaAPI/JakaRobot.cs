@@ -32,7 +32,7 @@ namespace JakaAPI
             _socketListening = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _socketListening.Connect(new IPEndPoint(IPAddress.Parse(domain), portListening));
             
-            if (_debugMode) FunctionFeedback += Console.WriteLine;
+            if (_debugMode) FunctionFeedback += _logger.LogMessage;
         }
 
         #region Powering and connection commands
@@ -75,6 +75,7 @@ namespace JakaAPI
             byte[] command = JakaCommand.BuildAsByteArray("disable_robot");
             _socketSending.Send(command);
             OnPostCommand();
+            _logger.Close();
         }
 
         /// <summary>
