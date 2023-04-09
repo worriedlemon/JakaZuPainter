@@ -8,6 +8,7 @@ namespace JakaAPI.Types.Math
         public Point Point { get; private set; }
         public RPYMatrix Rpymatrix { get; private set; }
 
+        [JsonConstructor]
         public CartesianPosition(Point point, RPYMatrix rpymatrix)
         {
             Point = point;

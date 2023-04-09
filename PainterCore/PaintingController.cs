@@ -1,5 +1,5 @@
-﻿using JakaAPI.Types.Math;
-using PainterArm;
+﻿using PainterArm;
+using PainterCore.Configuration;
 
 namespace PainterCore
 {
@@ -7,34 +7,28 @@ namespace PainterCore
     {
         public PaintingController()
         {
-            const string ip = "192.168.1.101";
+            const string ip = "192.168.1.100";
 
             _painter = new(ip);
             _palette = new(_painter);
             _mixer = new();
+            _logger = new();
         }
 
         private readonly JakaPainter _painter;
         private readonly Palette _palette;
         private readonly RobotMixerDummy _mixer;
+        private readonly Logger _logger;
 
         private ColorRGB _currentColor = new(0, 0, 0);
 
         public void Start()
         {
-            InitPainter();
+            _painter.DebugSubscribe(_logger.LogMessage);
+            //InitPainter();
 
-            CalibrationDialog(ref _painter.GetCanvasCoordinateSystemReference(), _painter.CanvasCalibrationBehavior.Calibrate, @"..\..\..\Configuration\canvas_calibration.json", "Canvas calibration");
-
-            Console.WriteLine("---- [Brushes calibration] ----\n");
-            _painter.CalibrateBrushes();
-
-            Console.WriteLine("---- [Dryer calibration] ----\n");
-            _painter.CalibrateDryer();
-
-            Console.WriteLine("---- [Pallete calibration] ----\n");
-            _palette.CalibratePalette();
-
+            Console.WriteLine("Calibration started.");
+            CalibrateAllDevices();
             Console.WriteLine("Calibration ended. Press any key to continue...");
             Console.ReadKey();
 
@@ -42,7 +36,7 @@ namespace PainterCore
 
             foreach (CommandHPGL command in commands.GetNextCommand())
             {
-                Console.WriteLine("Executing: " + command);
+                Console.WriteLine($"Executing: {command}");
 
                 switch (command.Code)
                 {
@@ -54,61 +48,54 @@ namespace PainterCore
                     case CodeHPGL.PW:
                         break;
                     case CodeHPGL.PU:
-                        _painter.BrushOrthogonal(100);
+                        _painter.BrushOrthogonalMove(100);
                         BrushMove(command.Arguments);
                         break;
                     case CodeHPGL.PD:
-                        _painter.BrushOrthogonal(0);
+                        _painter.BrushOrthogonalMove(0);
                         BrushMove(command.Arguments);
                         break;
                 }
 
-                Thread.Sleep(1000);
+                Thread.Sleep(500);
             }
 
-            DisablePainter();
+            //DisablePainter();
 
             Console.WriteLine("\nPress any button to exit the program...");
             Console.ReadKey();
         }
 
-        /// <summary>
-        /// Experimental function on loading and saving calibration settings of different devices
-        /// </summary>
-        /// <typeparam name="T">Data structure of device calibration configuration</typeparam>
-        /// <param name="loadableObject">Object, where the calibration is being used</param>
-        /// <param name="actionOnCalibrate">Function, which is invoked for calibration</param>
-        /// <param name="configPath">Path to save file</param>
-        /// <param name="configName">Headline of current dialog</param>
-        private static void CalibrationDialog<T>(ref T loadableObject, Func<T> actionOnCalibrate, string configPath, string configName = "Calibration")
+        private void CalibrateAllDevices()
         {
-            while (true)
-            {
-                Console.WriteLine($"---- [{configName}] ----\n");
-                Console.WriteLine("Load previous configuration? [Y/N]");
-                Console.Write("> ");
-                string input = Console.ReadLine();
+            // Canvas calibration
+            ConfigurationManager.CalibrationDialog(out CoordinateSystem2D canvasCoordinateSystem,
+                _painter.CanvasCalibrationBehavior,
+                @"..\..\..\Configuration\canvas_calibration.json",
+                "Canvas calibration");
+            _painter.CalibrateCanvas(canvasCoordinateSystem);
+            //_logger.LogMessage($"Calibrated coordinates:\n{canvasCoordinateSystem}")
 
-                if (!(input == "Y" || input == "N"))
-                {
-                    Console.WriteLine("Unknown response. Try again.");
-                    Console.Write("> ");
-                }
-                else
-                {
-                    if (input == "Y")
-                    {
-                        loadableObject = Configuration.ConfigurationManager.LoadFromFile<T>(configPath)!;
-                    }
-                    else
-                    {
-                        loadableObject = actionOnCalibrate.Invoke();
-                        Configuration.ConfigurationManager.SaveToFile(loadableObject, configPath);
-                    }
-                    break;
-                }
-            }
-            Console.WriteLine();
+            // Brushes calibration
+            ConfigurationManager.CalibrationDialog(out LocationDictionary brushesLocations,
+                _painter.BrushesCalibrationBehavior,
+                @"..\..\..\Configuration\brushes_calibration.json",
+                "Brushes calibration");
+            _painter.CalibrateBrushes(brushesLocations);
+
+            // Dryer calibration
+            ConfigurationManager.CalibrationDialog(out LocationDictionary dryerLocations,
+                _painter.DryerCalibrationBehavior,
+                @"..\..\..\Configuration\dryer_calibration.json",
+                "Dryer calibration");
+            _painter.CalibrateDryer(dryerLocations[dryerLocations.Count - 1]);
+
+            // Palette calibration
+            ConfigurationManager.CalibrationDialog(out CoordinateSystem2D paletteCoordinateSystem,
+                _palette.CalibrationBehavior,
+                @"..\..\..\Configuration\palette_calibration.json",
+                "Palette calibration");
+            _palette.CalibratePalette(paletteCoordinateSystem);
         }
 
         private void BrushColor(double[] arguments)
@@ -159,17 +146,15 @@ namespace PainterCore
             _painter.DrawLine(arguments[0], arguments[1]);
         }
 
-
         private void InitPainter()
         {
             _painter.PowerOn();
             _painter.EnableRobot();
-            //_painter.GripOff();
         }
 
         private void DisablePainter()
         {
-            //_painter.GripOff();
+            _painter.GripOff();
             _painter.DisableRobot();
             _painter.PowerOff();
         }

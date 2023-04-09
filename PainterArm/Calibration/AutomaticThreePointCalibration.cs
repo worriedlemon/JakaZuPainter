@@ -1,8 +1,8 @@
 ﻿namespace PainterArm.Calibration
 {
-    public class AutomaticCalibration : AbstractCalibrationBehavior
+    public class AutomaticThreePointCalibration : AbstractCalibrationBehavior
     {
-        public AutomaticCalibration(JakaPainter painterArm) : base(painterArm) { }
+        public AutomaticThreePointCalibration(JakaPainter painterArm) : base(painterArm) { }
 
         public override CoordinateSystem2D Calibrate()
         {

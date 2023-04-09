@@ -16,8 +16,6 @@ namespace JakaAPI
 
         private readonly Socket _socketListening;
 
-        private bool _debugMode = true;
-
         /// <summary>
         /// Constructor for Jaka Robot instance
         /// </summary>
@@ -30,9 +28,7 @@ namespace JakaAPI
             _socketSending.Connect(new IPEndPoint(IPAddress.Parse(domain), portSending));
 
             _socketListening = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            _socketListening.Connect(new IPEndPoint(IPAddress.Parse(domain), portListening));
-            
-            if (_debugMode) FunctionFeedback += Console.WriteLine;
+            _socketListening.Connect(new IPEndPoint(IPAddress.Parse(domain), portListening));         
         }
 
         #region Powering and connection commands

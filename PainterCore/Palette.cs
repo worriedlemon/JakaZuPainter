@@ -64,25 +64,30 @@ namespace PainterCore
 
     public class Palette
     {
+        private const int _safeZoneBorder = 10;
+        private const int _colorOffset = 20;
+        private int _currentX = _safeZoneBorder;
+        private int _currentY = _safeZoneBorder;
+
         private Dictionary<ColorRGB, CartesianPosition> _colorsLocations;
         private Dictionary<ColorRGB, int> _strokesRemaining;
 
         private const int _strokesCountPerMixing = 5;
-        
+
         private JakaPainter _painter;
         private CoordinateSystem2D? _coordinateSystem;
-        private AbstractCalibrationBehavior _calibrationBehavior;
+        public AbstractCalibrationBehavior CalibrationBehavior;
 
         public Palette(JakaPainter painterArm)
         {
             _colorsLocations = new Dictionary<ColorRGB, CartesianPosition>();
             _strokesRemaining = new Dictionary<ColorRGB, int>();
             _painter = painterArm;
-            _calibrationBehavior = new ManualCalibration(_painter);
+            CalibrationBehavior = new ManualThreePointCalibration(_painter);
         }
 
         // Calibration function, set Palette to PainterArm coordinated + Gives it allowed borders for color adding
-        public void CalibratePalette() => _coordinateSystem = _calibrationBehavior.Calibrate();
+        public void CalibratePalette(CoordinateSystem2D paletteCoordinates) => _coordinateSystem = paletteCoordinates;
 
         public bool IsColorAdded(ColorRGB color) => _colorsLocations.ContainsKey(color);
 
@@ -103,7 +108,7 @@ namespace PainterCore
             if (_colorsLocations.ContainsKey(color))
             {
                 _strokesRemaining[color] = _strokesCountPerMixing;
-            }        
+            }
         }
 
         // Substract this stroke from left strokes.
@@ -111,12 +116,32 @@ namespace PainterCore
 
         // Get remaining strokes count for this color. 0 strokes mean Robot Mixer request
         public int GetStrokesLeft(ColorRGB color) => _strokesRemaining[color];
-    
+
         // Calculate new coordinates on palette to place new color. Not done yet
         private CartesianPosition GetAvaliableLocation()
         {
-            if (_coordinateSystem == null) throw new InvalidOperationException("Pallete is not calibrated yet");
             return new CartesianPosition(_coordinateSystem.Zero, _coordinateSystem.RPYParameters);
+
+            if (_coordinateSystem == null) throw new InvalidOperationException("Pallete is not calibrated yet");
+
+            Point point = _coordinateSystem.CanvasPointToWorldPoint(_currentX, _currentY);
+            CartesianPosition avaliable = new CartesianPosition(point, _coordinateSystem.RPYParameters);
+
+            if (_currentX + _colorOffset <= _coordinateSystem.MaxX - _safeZoneBorder)
+            {
+                _currentX += _colorOffset;
+            }
+            else if (_currentY + _colorOffset <= _coordinateSystem.MaxY - _safeZoneBorder)
+            {
+                _currentX = _safeZoneBorder;
+                _currentY += _colorOffset;
+            }
+            else
+            {
+                throw new ArgumentException("Palette space ended!");
+            }
+
+            return avaliable;
         }
     }
 }
