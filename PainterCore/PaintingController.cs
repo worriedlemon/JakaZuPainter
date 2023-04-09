@@ -7,7 +7,7 @@ namespace PainterCore
     {
         public PaintingController()
         {
-            const string ip = "192.168.1.101";
+            const string ip = "192.168.1.100";
 
             _painter = new(ip);
             _palette = new(_painter);
@@ -24,11 +24,11 @@ namespace PainterCore
 
         public void Start()
         {
-            InitPainter();
-            CalibrateAllDevices();
-            
             _painter.DebugSubscribe(_logger.LogMessage);
+            //InitPainter();
 
+            Console.WriteLine("Calibration started.");
+            CalibrateAllDevices();
             Console.WriteLine("Calibration ended. Press any key to continue...");
             Console.ReadKey();
 
@@ -57,10 +57,10 @@ namespace PainterCore
                         break;
                 }
 
-                Thread.Sleep(1000);
+                Thread.Sleep(500);
             }
 
-            DisablePainter();
+            //DisablePainter();
 
             Console.WriteLine("\nPress any button to exit the program...");
             Console.ReadKey();
@@ -74,6 +74,7 @@ namespace PainterCore
                 @"..\..\..\Configuration\canvas_calibration.json",
                 "Canvas calibration");
             _painter.CalibrateCanvas(canvasCoordinateSystem);
+            //_logger.LogMessage($"Calibrated coordinates:\n{canvasCoordinateSystem}")
 
             // Brushes calibration
             ConfigurationManager.CalibrationDialog(out LocationDictionary brushesLocations,

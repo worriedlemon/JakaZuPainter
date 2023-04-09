@@ -2,15 +2,16 @@
 {
     public class Logger
     {
-        private readonly StreamWriter _writer;
-
         private readonly string _path = @"..\..\..\Log";
+        private string _filePath; 
 
         public Logger()
         {
             Directory.CreateDirectory(_path);
 
-            _writer = new StreamWriter(Path.Combine(_path, CreateUniqueFileName()));
+            _filePath = Path.Combine(_path, CreateUniqueFileName());
+
+            LogMessage("Started logger\n\nRobot painter commands log file\n\nDate: {DateTime.Now.Date:dd/MM/yyyy}\n");
         }
 
         private string CreateUniqueFileName()
@@ -23,24 +24,15 @@
             {
                 foreach (string file in files)
                 {
-                    Console.WriteLine("found: " + file);
                     string fileName = Path.GetFileNameWithoutExtension(file);
                     int fileNumber = int.Parse(fileName.Substring(11)); // 11 - length of "dd-MM-yyyy-" name base
                     logFileNumber = Math.Max(logFileNumber, fileNumber);
                 }
                 logFileNumber++;
             }
-            return $"{currentDate.ToString("dd-MM-yyyy")}-{logFileNumber}.log";
+            return $"{currentDate:dd-MM-yyyy}-{logFileNumber}.log";
         }
 
-        public void LogMessage(string message)
-        {
-            _writer.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}]: {message}");
-        }
-
-        public void Close()
-        {
-            _writer.Close();
-        }
+        public void LogMessage(string message) => File.AppendAllText(_filePath, $"[{DateTime.Now:HH:mm:ss}]: {message}\n");
     }
 }

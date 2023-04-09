@@ -120,6 +120,8 @@ namespace PainterCore
         // Calculate new coordinates on palette to place new color. Not done yet
         private CartesianPosition GetAvaliableLocation()
         {
+            return new CartesianPosition(_coordinateSystem.Zero, _coordinateSystem.RPYParameters);
+
             if (_coordinateSystem == null) throw new InvalidOperationException("Pallete is not calibrated yet");
 
             Point point = _coordinateSystem.CanvasPointToWorldPoint(_currentX, _currentY);

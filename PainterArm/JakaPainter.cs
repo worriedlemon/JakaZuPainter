@@ -124,6 +124,8 @@ namespace PainterArm
             // Move to position above the brush
             MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
 
+            Console.WriteLine($"PickNewBrush Upper Point: {new CartesianPosition(upperPoint, orthogonalRPY)}");
+
             GripOff();
 
             // Move to the brush on stand
@@ -142,6 +144,7 @@ namespace PainterArm
             Point upperPoint = new Point(colorPoint.X, colorPoint.Y, colorPoint.Z + _brushLength);
             RPYMatrix orthogonalRPY = colorPosition.Rpymatrix;
 
+            Console.WriteLine($"DunkBrushInColor Upper Point: {new CartesianPosition(upperPoint, orthogonalRPY)}");
             // Move to position above the palete
             MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
 
@@ -158,6 +161,7 @@ namespace PainterArm
             Point upperPoint = new Point(dryerPoint.X, dryerPoint.Y, dryerPoint.Z + _brushLength);
             RPYMatrix orthogonalRPY = _dryerLocation.Rpymatrix;
 
+            Console.WriteLine($"DryCurrentBrush Upper Point: {new CartesianPosition(upperPoint, orthogonalRPY)}");
             // Move to position above the dryer
             MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
 
