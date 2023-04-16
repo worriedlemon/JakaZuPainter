@@ -69,7 +69,7 @@ namespace JakaAPI.Types.Math
     }
 
     /// <summary>
-    /// A structure which represents a geometric vector in 3 dimentions
+    /// A structure, which represents a geometric vector in 3 dimentions
     /// </summary>
     public class Vector3
     {
@@ -77,7 +77,7 @@ namespace JakaAPI.Types.Math
         public double Dy { get; private set; }
         public double Dz { get; private set; }
 
-        private Vector3() { }
+        public Vector3() { }
 
         public Vector3(double x, double y, double z)
         {
@@ -139,6 +139,48 @@ namespace JakaAPI.Types.Math
             };
         }
 
+        /// <param name="a">First vector</param>
+        /// <param name="b">Second vector</param>
+        public static double DotProduct(Vector3 a, Vector3 b)
+        {
+            return a.Dx * b.Dx + a.Dy * b.Dy + a.Dz * b.Dz;
+        }
+
+        public Vector3 RotateX(double angle)
+        {
+            return new Vector3()
+            {
+                Dx = Dx,
+                Dy = Dy * System.Math.Cos(angle) - Dz * System.Math.Sin(angle),
+                Dz = Dy * System.Math.Sin(angle) + Dz * System.Math.Cos(angle)
+            };
+        }
+
+        public Vector3 RotateY(double angle)
+        {
+            return new Vector3()
+            {
+                Dx = Dx * System.Math.Cos(angle) + Dz * System.Math.Sin(angle),
+                Dy = Dy,
+                Dz = -Dx * System.Math.Sin(angle) + Dz * System.Math.Cos(angle)
+            };
+        }
+
+        public Vector3 RotateZ(double angle)
+        {
+            return new Vector3()
+            {
+                Dx = Dx * System.Math.Cos(angle) - Dy * System.Math.Sin(angle),
+                Dy = Dx * System.Math.Sin(angle) + Dy * System.Math.Cos(angle),
+                Dz = Dz
+            };
+        }
+
+        public Vector3 RotateXYZ(double rx, double ry, double rz)
+        {
+            return RotateX(rx).RotateY(ry).RotateZ(rz);
+        }
+
         public override string ToString()
         {
             return $"[{Dx.ToString(CultureInfo.InvariantCulture)}," +
@@ -147,6 +189,9 @@ namespace JakaAPI.Types.Math
         }
     }
 
+    /// <summary>
+    /// A structure, which represents a roll, pitch, yaw rotation matrix
+    /// </summary>
     public struct RPYMatrix
     {
         public double Rx { get; private set; }
@@ -160,5 +205,5 @@ namespace JakaAPI.Types.Math
             Ry = ry;
             Rz = rz;
         }
-    }
+    } 
 }

@@ -1,5 +1,6 @@
 ﻿using PainterArm;
 using PainterCore.Configuration;
+using JakaAPI.Types;
 
 namespace PainterCore
 {
@@ -48,11 +49,11 @@ namespace PainterCore
                     case CodeHPGL.PW:
                         break;
                     case CodeHPGL.PU:
-                        _painter.BrushOrthogonalMove(100);
+                        _painter.BrushOrthogonalMove(100, MovementType.Absolute);
                         BrushMove(command.Arguments);
                         break;
                     case CodeHPGL.PD:
-                        _painter.BrushOrthogonalMove(0);
+                        _painter.BrushOrthogonalMove(0, MovementType.Absolute);
                         BrushMove(command.Arguments);
                         break;
                 }

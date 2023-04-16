@@ -36,7 +36,7 @@ namespace PainterArm
 
             CurrentBrush = -1;
             SetDOState(0, 0, _grip);
-            CanvasCalibrationBehavior = new ManualThreePointCalibration(this);
+            CanvasCalibrationBehavior = new NeedleManualThreePointCalibration(this);
             DryerCalibrationBehavior = new ManualOnePointCalibration(this);
             BrushesCalibrationBehavior = new ManualOnePointCalibration(this);
         }
@@ -80,9 +80,18 @@ namespace PainterArm
         /// Move the brush perpendicular to the canvas
         /// </summary>
         /// <param name="height">Z-axis offset</param>
-        public void BrushOrthogonalMove(double height)
+        /// <param name="movementType">Brush movement type, absolute or relative</param>
+        public void BrushOrthogonalMove(double height, MovementType movementType)
         {
-            Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX, _currentY, _currentHeight = height);
+            if (movementType == MovementType.Relative)
+            {
+                height += _currentHeight;
+            }
+
+            _currentHeight = height;
+
+            Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX, _currentY, _currentHeight);
+
             MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), 100, 25, MovementType.Absolute);
         }
 
@@ -124,8 +133,6 @@ namespace PainterArm
             // Move to position above the brush
             MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
 
-            Console.WriteLine($"PickNewBrush Upper Point: {new CartesianPosition(upperPoint, orthogonalRPY)}");
-
             GripOff();
 
             // Move to the brush on stand
@@ -144,7 +151,6 @@ namespace PainterArm
             Point upperPoint = new Point(colorPoint.X, colorPoint.Y, colorPoint.Z + _brushLength);
             RPYMatrix orthogonalRPY = colorPosition.Rpymatrix;
 
-            Console.WriteLine($"DunkBrushInColor Upper Point: {new CartesianPosition(upperPoint, orthogonalRPY)}");
             // Move to position above the palete
             MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
 
@@ -161,7 +167,6 @@ namespace PainterArm
             Point upperPoint = new Point(dryerPoint.X, dryerPoint.Y, dryerPoint.Z + _brushLength);
             RPYMatrix orthogonalRPY = _dryerLocation.Rpymatrix;
 
-            Console.WriteLine($"DryCurrentBrush Upper Point: {new CartesianPosition(upperPoint, orthogonalRPY)}");
             // Move to position above the dryer
             MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
 
@@ -171,7 +176,6 @@ namespace PainterArm
             int rotationCount = 3;
             for (int i = 0; i < rotationCount; i++)
             {
-                //double c = (i % 2) * 2 - 1;
                 double c = Math.Pow(-1, i);
                 JointMove(new JointsPosition(0, 0, 0, 0, 0, c * 30), 100, 100, MovementType.Relative);
             }
