@@ -11,14 +11,29 @@
 
             while (true)
             {
-                int option = Int32.Parse(Console.ReadLine());
-                switch (option)
+                Console.Write("> ");
+                try
                 {
-                    case 1:
-                        locations.Add(locations.Count, PainterArm.GetRobotData().ArmCartesianPosition);
-                        break;
-                    case 0:
-                        return locations;
+                    int option = Int32.Parse(Console.ReadLine()!);
+                    switch (option)
+                    {
+                        case 1:
+                            locations.Add(locations.Count, PainterArm.GetRobotData().ArmCartesianPosition);
+                            break;
+                        case 0:
+                            if (locations.Count == 0)
+                            {
+                                Console.WriteLine("At least one location should be added");
+                                break;
+                            }
+                            return locations;
+                        default:
+                            throw new FormatException();
+                    }
+                }
+                catch (FormatException)
+                {
+                    Console.WriteLine("Unrecognized option. Try again.");
                 }
             }
         }

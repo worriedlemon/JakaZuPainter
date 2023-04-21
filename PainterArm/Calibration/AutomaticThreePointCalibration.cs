@@ -6,8 +6,7 @@
 
         public override CoordinateSystem2D Calibrate()
         {
-            Console.WriteLine("---- [Surface calibration] ----\nStarted automatic calibration...");
-            throw new NotImplementedException("Automatic calibration not implemented yet. Use ManualCalibration for now.");
+            throw new NotImplementedException("Automatic calibration not implemented yet. Use Manual Calibration behaviors instead for now.");
         }
     }
 }

@@ -1,6 +1,11 @@
 ﻿namespace PainterArm.Calibration
 {
     /// <summary>
+    /// Interface for implementing a calibratable data structure
+    /// </summary>
+    public interface ICalibratable { }
+
+    /// <summary>
     /// Abstract class for managing canvas surface calibration
     /// </summary>
     public abstract class AbstractCalibrationBehavior

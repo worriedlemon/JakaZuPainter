@@ -22,6 +22,7 @@ namespace PainterArm
         [JsonIgnore]
         public double MaxY { get; private set; }
 
+        [JsonInclude]
         public double UnitsPerMillimeter
         {
             get
@@ -64,7 +65,7 @@ namespace PainterArm
             MaxY = _axisY.Length();
             _axisY /= MaxY;
 
-            _zShift = Vector3.VectorProduct(_axisX, _axisY, false);
+            _zShift = Vector3.VectorProduct(_axisX, _axisY).Normalized();
             UnitsPerMillimeter = unitsPerMillimeter;
         }
 
@@ -80,6 +81,11 @@ namespace PainterArm
         {
             if (!(x >= 0 && x <= MaxX || y >= 0 && y <= MaxY)) throw new ArgumentException("X or Y out of field");
             return (Point)((Vector3)Zero + _axisX * x + _axisY * y + _zShift * z);
+        }
+
+        public static Vector3 FixZShiftByPoint(Vector3 zShift, Point zero, Point point)
+        {
+            return (Vector3.DotProduct((Vector3)point - (Vector3)zero, zShift) > 0) ? zShift : -zShift;
         }
 
         public override string ToString()

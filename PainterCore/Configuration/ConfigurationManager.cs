@@ -56,7 +56,10 @@ namespace PainterCore.Configuration
             while (true)
             {
                 Console.Write("> ");
-                switch (Console.ReadLine())
+                string option = Console.ReadLine()!;
+
+                Console.WriteLine();
+                switch (option)
                 {
                     case "Y":
                         loadableObject = LoadFromFile<T>(configPath)!;
@@ -69,7 +72,6 @@ namespace PainterCore.Configuration
                         Console.WriteLine("Unknown response. Try again.");
                         break;
                 }
-                Console.WriteLine("\n");
             }
         }
     }

@@ -15,7 +15,8 @@ namespace PainterArm
 
         private LocationDictionary _brushesLocations;
         private CartesianPosition _dryerLocation;
-        private const int _brushLength = 100;
+
+        private const double _brushLength = 220;
         public int CurrentBrush { get; private set; }
 
         /// <summary>
@@ -29,14 +30,14 @@ namespace PainterArm
             : base(domain, portSending, portListening)
         {
             _brushesLocations = new LocationDictionary();
-            _grip = false;
+            _grip = true;
             _currentX = 0;
             _currentY = 0;
             _currentHeight = 0;
 
             CurrentBrush = -1;
             SetDOState(0, 0, _grip);
-            CanvasCalibrationBehavior = new NeedleManualThreePointCalibration(this);
+            CanvasCalibrationBehavior = new NeedleManualThreePointCalibration(this, 217);
             DryerCalibrationBehavior = new ManualOnePointCalibration(this);
             BrushesCalibrationBehavior = new ManualOnePointCalibration(this);
         }
@@ -102,7 +103,7 @@ namespace PainterArm
         {   
             CartesianPosition brushPosition = _brushesLocations[CurrentBrush];
             Point brushPoint = brushPosition.Point;
-            Point upperPoint = new Point(brushPoint.X, brushPoint.Y, brushPoint.Z + _brushLength);
+            Point upperPoint = new(brushPoint.X, brushPoint.Y, brushPoint.Z + _brushLength);
             RPYMatrix orthogonalRPY = brushPosition.Rpymatrix;
 
             // Move to position above the brush

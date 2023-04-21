@@ -83,7 +83,7 @@ namespace PainterCore
             _colorsLocations = new Dictionary<ColorRGB, CartesianPosition>();
             _strokesRemaining = new Dictionary<ColorRGB, int>();
             _painter = painterArm;
-            CalibrationBehavior = new ManualThreePointCalibration(_painter);
+            CalibrationBehavior = new SimpleManualThreePointCalibration(_painter);
         }
 
         // Calibration function, set Palette to PainterArm coordinated + Gives it allowed borders for color adding

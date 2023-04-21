@@ -8,7 +8,7 @@ namespace PainterCore
     {
         public PaintingController()
         {
-            const string ip = "192.168.1.100";
+            const string ip = "192.168.1.101";
 
             _painter = new(ip);
             _palette = new(_painter);
@@ -22,6 +22,8 @@ namespace PainterCore
         private readonly Logger _logger;
 
         private ColorRGB _currentColor = new(0, 0, 0);
+
+        private double _brushLength = 217;
 
         public void Start()
         {
@@ -49,11 +51,11 @@ namespace PainterCore
                     case CodeHPGL.PW:
                         break;
                     case CodeHPGL.PU:
-                        _painter.BrushOrthogonalMove(100, MovementType.Absolute);
+                        _painter.BrushOrthogonalMove(_brushLength + 100, MovementType.Absolute);
                         BrushMove(command.Arguments);
                         break;
                     case CodeHPGL.PD:
-                        _painter.BrushOrthogonalMove(0, MovementType.Absolute);
+                        _painter.BrushOrthogonalMove(_brushLength + 0, MovementType.Absolute);
                         BrushMove(command.Arguments);
                         break;
                 }
@@ -75,7 +77,8 @@ namespace PainterCore
                 @"..\..\..\Configuration\canvas_calibration.json",
                 "Canvas calibration");
             _painter.CalibrateCanvas(canvasCoordinateSystem);
-            //_logger.LogMessage($"Calibrated coordinates:\n{canvasCoordinateSystem}")
+            Console.WriteLine($"Calibrated coordinates:\n{canvasCoordinateSystem}\n{canvasCoordinateSystem.RPYParameters}\n");
+            _logger.LogMessage($"Calibrated coordinates:\n{canvasCoordinateSystem}\n{canvasCoordinateSystem.RPYParameters}\n");
 
             // Brushes calibration
             ConfigurationManager.CalibrationDialog(out LocationDictionary brushesLocations,
