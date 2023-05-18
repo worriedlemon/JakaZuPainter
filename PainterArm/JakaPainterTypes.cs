@@ -13,7 +13,7 @@ namespace PainterArm
         public Point Zero, AxisX, AxisY;
 
         [JsonInclude]
-        public RPYMatrix RPYParameters;
+        public RPYRotation RPYParameters;
 
         private Vector3 _axisX, _axisY, _zShift;
 
@@ -51,7 +51,7 @@ namespace PainterArm
         /// <param name="axisY">Point in the direction of Y-axis</param>
         /// <param name="RPYparameters">Rotation parameters of the grip</param>
         [JsonConstructor]
-        public CoordinateSystem2D(Point zero, Point axisX, Point axisY, RPYMatrix RPYparameters, double unitsPerMillimeter = 1)
+        public CoordinateSystem2D(Point zero, Point axisX, Point axisY, RPYRotation RPYparameters, double unitsPerMillimeter = 1)
         {
             Zero = zero;
             AxisX = axisX;
