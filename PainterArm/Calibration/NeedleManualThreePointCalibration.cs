@@ -77,7 +77,7 @@ namespace PainterArm.Calibration
 
         }
 
-        private RPYRotation GetRPYByPoints(Point zero, Point axisX, Point axisY, bool inversed = false)
+        private RPYMatrix GetRPYByPoints(Point zero, Point axisX, Point axisY, bool inversed = false)
         {
             Vector3 vAxisX = ((Vector3)axisX - (Vector3)zero).Normalized();
             Vector3 vAxisY = ((Vector3)axisY - (Vector3)zero).Normalized();

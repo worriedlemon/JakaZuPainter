@@ -104,7 +104,7 @@ namespace PainterArm
             CartesianPosition brushPosition = _brushesLocations[CurrentBrush];
             Point brushPoint = brushPosition.Point;
             Point upperPoint = new(brushPoint.X, brushPoint.Y, brushPoint.Z + _brushLength);
-            RPYRotation orthogonalRPY = brushPosition.Rpymatrix;
+            RPYMatrix orthogonalRPY = brushPosition.Rpymatrix;
 
             // Move to position above the brush
             MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
@@ -129,7 +129,7 @@ namespace PainterArm
             CartesianPosition brushPosition = _brushesLocations[num];
             Point brushPoint = brushPosition.Point;
             Point upperPoint = new Point(brushPoint.X, brushPoint.Y, brushPoint.Z + _brushLength);
-            RPYRotation orthogonalRPY = brushPosition.Rpymatrix;
+            RPYMatrix orthogonalRPY = brushPosition.Rpymatrix;
 
             // Move to position above the brush
             MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
@@ -150,7 +150,7 @@ namespace PainterArm
         {
             Point colorPoint = colorPosition.Point;
             Point upperPoint = new Point(colorPoint.X, colorPoint.Y, colorPoint.Z + _brushLength);
-            RPYRotation orthogonalRPY = colorPosition.Rpymatrix;
+            RPYMatrix orthogonalRPY = colorPosition.Rpymatrix;
 
             // Move to position above the palete
             MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
@@ -166,7 +166,7 @@ namespace PainterArm
         {
             Point dryerPoint = _dryerLocation.Point;
             Point upperPoint = new Point(dryerPoint.X, dryerPoint.Y, dryerPoint.Z + _brushLength);
-            RPYRotation orthogonalRPY = _dryerLocation.Rpymatrix;
+            RPYMatrix orthogonalRPY = _dryerLocation.Rpymatrix;
 
             // Move to position above the dryer
             MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);

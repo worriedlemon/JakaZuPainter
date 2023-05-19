@@ -1,6 +1,4 @@
-﻿using JakaAPI.Types.Math;
-
-namespace PainterCore
+﻿namespace PainterCore
 {
     internal class Program
     {
@@ -15,12 +13,8 @@ namespace PainterCore
         {
             PrintLicenseInfo();
 
-            Matrix3x3 matrix3X3 = -1 * Matrix3x3.RotationMatrix(90, 45, -30);
-            Console.WriteLine(matrix3X3);
-            Console.WriteLine(matrix3X3.ToRPY());
-
-            //PaintingController paintingController = new(); 
-            //paintingController.Start();
+            PaintingController paintingController = new(); 
+            paintingController.Start();
         }
     }
 }

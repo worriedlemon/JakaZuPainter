@@ -17,7 +17,7 @@ namespace PainterArm.Calibration
         {
             byte complete = 0;
             Point zero = new(), axisX = new(), axisY = new();
-            RPYRotation canvasRPY = new(180, 0, 0);
+            RPYMatrix canvasRPY = new(180, 0, 0);
 
             Console.WriteLine("(1) Set zero pivot point\n" +
                 "(2) Set X-axis point\n" +

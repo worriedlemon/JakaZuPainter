@@ -1,7 +1,6 @@
 ﻿using static System.Math;
 using System.Globalization;
 using System.Text.Json.Serialization;
-using System.Security.Cryptography;
 
 namespace JakaAPI.Types.Math
 {
@@ -10,10 +9,10 @@ namespace JakaAPI.Types.Math
     public struct CartesianPosition
     {
         public Point Point { get; private set; }
-        public RPYRotation Rpymatrix { get; private set; }
+        public RPYMatrix Rpymatrix { get; private set; }
 
         [JsonConstructor]
-        public CartesianPosition(Point point, RPYRotation rpymatrix)
+        public CartesianPosition(Point point, RPYMatrix rpymatrix)
         {
             Point = point;
             Rpymatrix = rpymatrix;
@@ -22,7 +21,7 @@ namespace JakaAPI.Types.Math
         public CartesianPosition(double x, double y, double z, double rx, double ry, double rz)
         {
             Point = new Point(x, y, z);
-            Rpymatrix = new RPYRotation(rx, ry, rz);
+            Rpymatrix = new RPYMatrix(rx, ry, rz);
         }
 
         public CartesianPosition(double[] pos) : this(pos[0], pos[1], pos[2], pos[3], pos[4], pos[5])
@@ -242,34 +241,23 @@ namespace JakaAPI.Types.Math
         public static Matrix3x3 RotationMatrix(double rx, double ry, double rz, bool degrees = true)
         {
             DoubleTranslation translate = degrees ? MathDefinitions.DegToRad : (double arg) => { return arg; };
-            (double sin, double cos) psi = SinCos(translate(rz)), theta = SinCos(translate(ry)), phi = SinCos(translate(rx));
+            (double sin, double cos) alpha = SinCos(translate(rx)), beta = SinCos(translate(ry)), gamma = SinCos(translate(rz));
 
-            // Maybe should be transposed
             return new(new double[3, 3]
             {
-                { psi.cos * theta.cos, psi.sin * theta.cos, -theta.sin },
-                { psi.cos * theta.sin * phi.sin - psi.sin * phi.cos, psi.sin * theta.sin * phi.sin + psi.cos * phi.cos, theta.cos * phi.sin },
-                { psi.cos * theta.sin * phi.cos + psi.sin * phi.sin, psi.sin * theta.sin * phi.cos - psi.cos * phi.sin, theta.cos * phi.cos }
+                { beta.cos * gamma.cos, -gamma.sin * beta.cos, beta.sin },
+                { alpha.sin * beta.sin * gamma.cos + gamma.sin * alpha.cos, -alpha.sin * beta.sin * gamma.sin + alpha.cos * gamma.cos, -alpha.sin * beta.cos },
+                { alpha.sin * gamma.sin + beta.sin * alpha.cos * gamma.cos, alpha.sin * gamma.cos + beta.sin * gamma.sin * alpha.cos, alpha.cos * beta.cos }
             });
         }
 
-        public RPYRotation ToRPY(bool degrees = true)
+        public RPYMatrix ToRPY(bool degrees = true)
         {
-            DoubleTranslation translate = degrees ? MathDefinitions.RadToDeg : (double arg) => { return arg; };
+            DoubleTranslation translate = degrees ? MathDefinitions.RadToDeg : (double arg) => { return arg; }; 
 
-            double phi = Atan2(data[1, 2], data[2, 2]);
-            double rx = translate(phi);
-            //sign shadowing due to Sqrt (?)
-            //double ry = translate(Atan2(-data[0, 2], Sqrt(data[0, 0] * data[0, 0] + data[0, 1] * data[0, 1])))
-            double rz = translate(Atan2(data[0, 1], data[0, 0]));
-
-            // Probably should also consider the case of data[2, 2] and data[1, 2] being zero (can it really be?)
-            double ry;
-            if (-1e-9 < phi && phi < 1e-9 || -1e-9 < phi - PI && phi - PI < 1e-9)
-            {
-                ry = translate(Atan2(-data[0, 2], data[2, 2] / Cos(phi)));
-            }
-            else ry = translate(Atan2(-data[0, 2], data[1, 2] / Sin(phi)));
+            double rx = translate(Atan2(data[2, 1], data[2, 2]));
+            double ry = translate(Atan2(data[2, 0], Sqrt(data[2, 1] * data[2, 1] + data[2, 2] * data[2, 2])));
+            double rz = translate(Atan2(data[1, 0], data[0, 0]));
 
             return new(rx, ry, rz);
         }
@@ -283,14 +271,14 @@ namespace JakaAPI.Types.Math
     /// <summary>
     /// A structure, which represents a roll, pitch, yaw rotation matrix
     /// </summary>
-    public struct RPYRotation
+    public struct RPYMatrix
     {
         public double Rx { get; private set; }
         public double Ry { get; private set; }
         public double Rz { get; private set; }
 
         [JsonConstructor]
-        public RPYRotation(double rx, double ry, double rz)
+        public RPYMatrix(double rx, double ry, double rz)
         {
             Rx = rx;
             Ry = ry;
