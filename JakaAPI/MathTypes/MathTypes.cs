@@ -188,15 +188,15 @@ namespace JakaAPI.Types.Math
         {
             data = new double[3, 3];
             data[0, 0] = x.Dx;
-            data[0, 1] = x.Dy;
-            data[0, 2] = x.Dz;
+            data[1, 0] = x.Dy;
+            data[2, 0] = x.Dz;
 
-            data[1, 0] = y.Dx;
+            data[0, 1] = y.Dx;
             data[1, 1] = y.Dy;
-            data[1, 2] = y.Dz;
+            data[2, 1] = y.Dz;
 
-            data[2, 0] = z.Dx;
-            data[2, 1] = z.Dy;
+            data[0, 2] = z.Dx;
+            data[1, 2] = z.Dy;
             data[2, 2] = z.Dz;
         }
 
