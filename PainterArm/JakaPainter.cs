@@ -17,6 +17,8 @@ namespace PainterArm
         private CartesianPosition _dryerLocation;
 
         private const double _brushLength = 220;
+        private const double _needleLength = 217;
+
         public int CurrentBrush { get; private set; }
 
         /// <summary>
@@ -37,7 +39,7 @@ namespace PainterArm
 
             CurrentBrush = -1;
             SetDOState(0, 0, _grip);
-            CanvasCalibrationBehavior = new NeedleManualThreePointCalibration(this, 217);
+            CanvasCalibrationBehavior = new NeedleManualThreePointCalibration(this, _needleLength);
             DryerCalibrationBehavior = new ManualOnePointCalibration(this);
             BrushesCalibrationBehavior = new ManualOnePointCalibration(this);
         }
@@ -104,7 +106,7 @@ namespace PainterArm
             CartesianPosition brushPosition = _brushesLocations[CurrentBrush];
             Point brushPoint = brushPosition.Point;
             Point upperPoint = new(brushPoint.X, brushPoint.Y, brushPoint.Z + _brushLength);
-            RPYMatrix orthogonalRPY = brushPosition.Rpymatrix;
+            RPYRotation orthogonalRPY = brushPosition.Rpymatrix;
 
             // Move to position above the brush
             MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
@@ -129,7 +131,7 @@ namespace PainterArm
             CartesianPosition brushPosition = _brushesLocations[num];
             Point brushPoint = brushPosition.Point;
             Point upperPoint = new Point(brushPoint.X, brushPoint.Y, brushPoint.Z + _brushLength);
-            RPYMatrix orthogonalRPY = brushPosition.Rpymatrix;
+            RPYRotation orthogonalRPY = brushPosition.Rpymatrix;
 
             // Move to position above the brush
             MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
@@ -150,7 +152,7 @@ namespace PainterArm
         {
             Point colorPoint = colorPosition.Point;
             Point upperPoint = new Point(colorPoint.X, colorPoint.Y, colorPoint.Z + _brushLength);
-            RPYMatrix orthogonalRPY = colorPosition.Rpymatrix;
+            RPYRotation orthogonalRPY = colorPosition.Rpymatrix;
 
             // Move to position above the palete
             MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
@@ -166,7 +168,7 @@ namespace PainterArm
         {
             Point dryerPoint = _dryerLocation.Point;
             Point upperPoint = new Point(dryerPoint.X, dryerPoint.Y, dryerPoint.Z + _brushLength);
-            RPYMatrix orthogonalRPY = _dryerLocation.Rpymatrix;
+            RPYRotation orthogonalRPY = _dryerLocation.Rpymatrix;
 
             // Move to position above the dryer
             MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);

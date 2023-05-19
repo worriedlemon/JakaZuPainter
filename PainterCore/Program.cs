@@ -11,10 +11,8 @@
 
         static void Main(string[] args)
         {
-            PrintLicenseInfo();
-
-            PaintingController paintingController = new(); 
-            paintingController.Start();
+            //PaintingController paintingController = new(); 
+            //paintingController.Start();
         }
     }
 }

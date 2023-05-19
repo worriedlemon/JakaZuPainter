@@ -73,17 +73,16 @@ namespace PainterArm.Calibration
 
         private Point GetCanvasPointByNeedle(CartesianPosition pos)
         {
-            return (Point)((Vector3)pos.Point + Matrix3x3.RotationMatrix(pos.Rpymatrix.Rx, pos.Rpymatrix.Ry, pos.Rpymatrix.Rz) * new Vector3(0, 0, _needleLength));
-
+            return (Point)((Vector3)pos.Point + Matrix.RotationMatrix(pos.Rpymatrix.Rx, pos.Rpymatrix.Ry, pos.Rpymatrix.Rz) * new Vector3(0, 0, _needleLength));
         }
 
-        private RPYMatrix GetRPYByPoints(Point zero, Point axisX, Point axisY, bool inversed = false)
+        private RPYRotation GetRPYByPoints(Point zero, Point axisX, Point axisY, bool inversed = false)
         {
             Vector3 vAxisX = ((Vector3)axisX - (Vector3)zero).Normalized();
             Vector3 vAxisY = ((Vector3)axisY - (Vector3)zero).Normalized();
             Vector3 vAxisZ = CoordinateSystem2D.FixZShiftByPoint(Vector3.VectorProduct(vAxisX, vAxisY).Normalized(), zero, PainterArm.GetRobotData().ArmCartesianPosition.Point);
 
-            return (new Matrix3x3(vAxisX, vAxisY, vAxisZ) * (inversed ? -1 : 1)).ToRPY();
+            return (new Matrix(vAxisX, vAxisY, vAxisZ) * (inversed ? -1 : 1)).ToRPY();
         }
     }
 }

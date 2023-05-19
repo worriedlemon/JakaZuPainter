@@ -9,10 +9,10 @@ namespace JakaAPI.Types.Math
     public struct CartesianPosition
     {
         public Point Point { get; private set; }
-        public RPYMatrix Rpymatrix { get; private set; }
+        public RPYRotation Rpymatrix { get; private set; }
 
         [JsonConstructor]
-        public CartesianPosition(Point point, RPYMatrix rpymatrix)
+        public CartesianPosition(Point point, RPYRotation rpymatrix)
         {
             Point = point;
             Rpymatrix = rpymatrix;
@@ -21,7 +21,7 @@ namespace JakaAPI.Types.Math
         public CartesianPosition(double x, double y, double z, double rx, double ry, double rz)
         {
             Point = new Point(x, y, z);
-            Rpymatrix = new RPYMatrix(rx, ry, rz);
+            Rpymatrix = new RPYRotation(rx, ry, rz);
         }
 
         public CartesianPosition(double[] pos) : this(pos[0], pos[1], pos[2], pos[3], pos[4], pos[5])
@@ -140,12 +140,41 @@ namespace JakaAPI.Types.Math
         }
     }
 
-    public class Matrix3x3
+    public class Matrix
     {
-        private readonly double[,] data = new double[3, 3];
+        private readonly double[,] data;
+        public int NbRows { get; private set; }
+        public int NbCols { get; private set; }
+        public double this[int i, int j] => data[i, j];
 
-        public Matrix3x3(double[,] data)
+        public Matrix(int rows, int cols)
         {
+            if (rows < 1 || cols < 1)
+            {
+                throw new Exception($"Invalid matrix size");
+            }
+
+            NbRows = rows;
+            NbCols = cols;
+
+            data = new double[rows, cols];
+            FillMatrix(0);
+        }
+
+        public Matrix(Matrix A) : this(A.data) { }
+
+        public Matrix(double[,] data)
+        {
+            NbRows = data.GetLength(0);
+            NbCols = data.GetLength(1);
+
+            if (NbRows < 1 || NbCols < 1)
+            {
+                throw new Exception($"Invalid matrix size");
+            }
+
+            this.data = new double[NbRows, NbCols];
+
             for (int i = 0; i < 3; i++)
             {
                 for (int j = 0; j < 3; j++)
@@ -155,43 +184,38 @@ namespace JakaAPI.Types.Math
             }
         }
 
-        public Matrix3x3(double value = 0)
+        public Matrix(Vector3 x, Vector3 y, Vector3 z)
         {
-            for (int i = 0; i < 3; i++)
-            {
-                for (int j = 0; j < 3; j++)
-                {
-                    data[i, j] = value;
-                }
-            }
-        }
-
-        public Matrix3x3(Vector3 x, Vector3 y, Vector3 z)
-        {
+            data = new double[3, 3];
             data[0, 0] = x.Dx;
-            data[1, 0] = x.Dy;
-            data[2, 0] = x.Dz;
-            data[0, 1] = y.Dx;
+            data[0, 1] = x.Dy;
+            data[0, 2] = x.Dz;
+
+            data[1, 0] = y.Dx;
             data[1, 1] = y.Dy;
-            data[2, 1] = y.Dz;
-            data[0, 2] = z.Dx;
-            data[1, 2] = z.Dy;
+            data[1, 2] = y.Dz;
+
+            data[2, 0] = z.Dx;
+            data[2, 1] = z.Dy;
             data[2, 2] = z.Dz;
         }
 
-        public Vector3 this[int i] => new(data[0, i], data[1, i], data[2, i]);
+        //public Vector3 this[int i] => new(data[0, i], data[1, i], data[2, i]);
 
-        public double this[int i, int j] => data[i, j];
-
-        public static Matrix3x3 operator *(Matrix3x3 A, Matrix3x3 B)
+        public static Matrix operator *(Matrix A, Matrix B)
         {
-            Matrix3x3 result = new();
-
-            for (int i = 0; i < 3; i++)
+            if (A.NbCols != B.NbRows)
             {
-                for (int j = 0; j < 3; j++)
+                throw new Exception($"Invalid matrix size");
+            }
+
+            Matrix result = new Matrix(A.NbRows, B.NbCols);
+
+            for (int i = 0; i < result.NbRows; i++)
+            {
+                for (int j = 0; j < result.NbCols; j++)
                 {
-                    for (int k = 0; k < 3; k++)
+                    for (int k = 0; k < A.NbCols; k++)
                     {
                         result.data[i, j] += A.data[i, k] * B.data[k, j];
                     }
@@ -201,12 +225,13 @@ namespace JakaAPI.Types.Math
             return result;
         }
 
-        public static Matrix3x3 operator *(Matrix3x3 A, double value)
+        public static Matrix operator *(Matrix A, double value)
         {
-            Matrix3x3 result = new();
-            for (int i = 0; i < 3; i++)
+            Matrix result = new Matrix(A.NbRows, A.NbCols);
+
+            for (int i = 0; i < A.NbRows; i++)
             {
-                for (int j = 0; j < 3; j++)
+                for (int j = 0; j < A.NbCols; j++)
                 {
                     result.data[i, j] = A.data[i, j] * value;
                 }
@@ -215,51 +240,77 @@ namespace JakaAPI.Types.Math
             return result;
         }
 
-        public static Matrix3x3 operator *(double value, Matrix3x3 A) => A * value;
+        public static Matrix operator *(double value, Matrix A) => A * value;
 
-        public static readonly Matrix3x3 Identity = new(new double[3, 3]
+        public static readonly Matrix Identity = new(new double[3, 3]
                 {
                     { 1, 0, 0 },
                     { 0, 1, 0 },
                     { 0, 0, 1 }
                 });
 
-        public static Vector3 operator*(Matrix3x3 m, Vector3 v)
+        public static Vector3 operator *(Matrix A, Vector3 v)
         {
+            if (A.NbCols != 3 || A.NbRows != 3)
+            {
+                throw new Exception($"Invalid matrix size");
+            }
+
             double[] vc = new double[3] { 0, 0, 0 };
             double[] coord = new double[3] { v.Dx, v.Dy, v.Dz };
             for (int i = 0; i < 3; i++)
             {
                 for (int j = 0; j < 3; j++)
                 {
-                    vc[i] += m.data[i, j] * coord[j];
+                    vc[i] += A.data[i, j] * coord[j];
                 }
             }
             return new Vector3(vc[0], vc[1], vc[2]);
         }
 
-        public static Matrix3x3 RotationMatrix(double rx, double ry, double rz, bool degrees = true)
+        public static Matrix RotationMatrix(double rx, double ry, double rz, bool degrees = true)
         {
             DoubleTranslation translate = degrees ? MathDefinitions.DegToRad : (double arg) => { return arg; };
-            (double sin, double cos) alpha = SinCos(translate(rx)), beta = SinCos(translate(ry)), gamma = SinCos(translate(rz));
+            (double sin, double cos)
+                phi = SinCos(translate(rx)),
+                theta = SinCos(translate(ry)),
+                psi = SinCos(translate(rz));
 
             return new(new double[3, 3]
             {
-                { beta.cos * gamma.cos, -gamma.sin * beta.cos, beta.sin },
-                { alpha.sin * beta.sin * gamma.cos + gamma.sin * alpha.cos, -alpha.sin * beta.sin * gamma.sin + alpha.cos * gamma.cos, -alpha.sin * beta.cos },
-                { alpha.sin * gamma.sin + beta.sin * alpha.cos * gamma.cos, alpha.sin * gamma.cos + beta.sin * gamma.sin * alpha.cos, alpha.cos * beta.cos }
+                { psi.cos * theta.cos, psi.sin * theta.cos, -theta.sin },
+                { psi.cos * theta.sin * phi.sin - psi.sin * phi.cos, psi.sin * theta.sin * phi.sin + psi.cos * phi.cos, theta.cos * phi.sin },
+                { psi.cos * theta.sin * phi.cos + psi.sin * phi.sin, psi.sin * theta.sin * phi.cos - psi.cos * phi.sin, theta.cos * phi.cos }
             });
         }
 
-        public RPYMatrix ToRPY(bool degrees = true)
+        public RPYRotation ToRPY(bool degrees = true)
         {
-            DoubleTranslation translate = degrees ? MathDefinitions.RadToDeg : (double arg) => { return arg; }; 
+            DoubleTranslation translate = degrees ? MathDefinitions.RadToDeg : (double arg) => { return arg; };
 
-            double rx = translate(Atan2(data[2, 1], data[2, 2]));
-            double ry = translate(Atan2(data[2, 0], Sqrt(data[2, 1] * data[2, 1] + data[2, 2] * data[2, 2])));
-            double rz = translate(Atan2(data[1, 0], data[0, 0]));
+            double phi = Atan2(data[1, 2], data[2, 2]);
+
+            double rx = translate(phi);
+            double rz = translate(Atan2(data[0, 1], data[0, 0]));
+            double ry;
+            if (-1e-9 < phi && phi < 1e-9 || -1e-9 < phi - PI && phi - PI < 1e-9)
+            {
+                ry = translate(Atan2(-data[0, 2], data[2, 2] / Cos(phi)));
+            }
+            else ry = translate(Atan2(-data[0, 2], data[1, 2] / Sin(phi)));
 
             return new(rx, ry, rz);
+        }
+
+        private void FillMatrix(double x)
+        {
+            for (int i = 0; i < NbRows; i++)
+            {
+                for (int j = 0; j < NbCols; j++)
+                {
+                    data[i, j] = x;
+                }
+            }
         }
 
         public override string ToString()
@@ -271,14 +322,14 @@ namespace JakaAPI.Types.Math
     /// <summary>
     /// A structure, which represents a roll, pitch, yaw rotation matrix
     /// </summary>
-    public struct RPYMatrix
+    public struct RPYRotation
     {
         public double Rx { get; private set; }
         public double Ry { get; private set; }
         public double Rz { get; private set; }
 
         [JsonConstructor]
-        public RPYMatrix(double rx, double ry, double rz)
+        public RPYRotation(double rx, double ry, double rz)
         {
             Rx = rx;
             Ry = ry;
@@ -291,7 +342,7 @@ namespace JakaAPI.Types.Math
     public static class MathDefinitions
     {
         public static double DegToRad(double value) => value * PI / 180;
-        
+
         public static double RadToDeg(double value) => value * 180 / PI;
     }
 }
