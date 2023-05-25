@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Text.Json.Nodes;
 using JakaAPI.Types;
 using JakaAPI.Types.Math;
+using System.Text.Json;
 
 namespace JakaAPI
 {
@@ -28,7 +29,7 @@ namespace JakaAPI
             _socketSending.Connect(new IPEndPoint(IPAddress.Parse(domain), portSending));
 
             _socketListening = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            _socketListening.Connect(new IPEndPoint(IPAddress.Parse(domain), portListening));         
+            _socketListening.Connect(new IPEndPoint(IPAddress.Parse(domain), portListening));
         }
 
         #region Powering and connection commands
@@ -173,7 +174,7 @@ namespace JakaAPI
         /// <param name="movementType">Type of a movement (absolute or relative)</param>
         public void JointMove(JointsPosition jointPositions, double speed, double acceleration, MovementType movementType)
         {
-            byte[] command = JakaCommand.BuildAsByteArray("joint_move", 
+            byte[] command = JakaCommand.BuildAsByteArray("joint_move",
                 new CommandParameter("jointPosition", $"{jointPositions}"),
                 new CommandParameter("speed", speed.ToString(CultureInfo.InvariantCulture)),
                 new CommandParameter("accel", acceleration.ToString(CultureInfo.InvariantCulture)),
@@ -195,7 +196,7 @@ namespace JakaAPI
                 new CommandParameter("speed", speed.ToString(CultureInfo.InvariantCulture)),
                 new CommandParameter("accel", acceleration.ToString(CultureInfo.InvariantCulture)));
             _socketSending.Send(command);
-            
+
             OnPostCommand();
         }
 
@@ -214,7 +215,7 @@ namespace JakaAPI
                 new CommandParameter("accel", acceleration.ToString(CultureInfo.InvariantCulture)),
                 new CommandParameter("relFlag", $"{(int)movementType}"));
             _socketSending.Send(command);
-            
+
             OnPostCommand();
         }
 
@@ -225,11 +226,14 @@ namespace JakaAPI
         /// <summary>
         /// Function for getting digital input status
         /// </summary>
-        public void GetDIStatus()
+        public bool[] GetDIStatus()
         {
             byte[] command = JakaCommand.BuildAsByteArray("get_digital_input_status");
             _socketSending.Send(command);
-            OnPostCommand();
+            Thread.Sleep(_commandDelay);
+
+            JsonObject jsonObject = JsonNode.Parse(ReadSendingResponse())!.AsObject();
+            return jsonObject["din_status"]!.AsArray().Deserialize<bool[]>()!;
         }
 
         /// <summary>

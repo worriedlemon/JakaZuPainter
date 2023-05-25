@@ -21,6 +21,8 @@ namespace PainterArm
 
         public int CurrentBrush { get; private set; }
 
+        private Dictionary<int, int> _brushesDI;
+
         /// <summary>
         /// Indicates whether the grip of the robot is being in grap state
         /// </summary>
@@ -42,6 +44,16 @@ namespace PainterArm
             CanvasCalibrationBehavior = new NeedleManualThreePointCalibration(this, _needleLength);
             DryerCalibrationBehavior = new ManualOnePointCalibration(this);
             BrushesCalibrationBehavior = new ManualOnePointCalibration(this);
+
+            _brushesDI = new Dictionary<int, int>()
+            {
+                { 0, 5 }, // Change to actual DIs
+                { 1, 6 },
+                { 2, 7 },
+                { 3, 8 },
+                { 4, 9 },
+                { 5, 10 },
+            };
         }
 
         /// <summary>
@@ -102,7 +114,7 @@ namespace PainterArm
         /// Returns current held brush to the stand
         /// </summary>
         public void ReturnCurrentBrush()
-        {   
+        {
             CartesianPosition brushPosition = _brushesLocations[CurrentBrush];
             Point brushPoint = brushPosition.Point;
             Point upperPoint = new(brushPoint.X, brushPoint.Y, brushPoint.Z + _brushLength);
@@ -205,6 +217,12 @@ namespace PainterArm
         {
             _grip = !_grip;
             SetDOState(0, 0, _grip);
+        }
+
+        public bool GetBrushState(int brushNum)
+        {
+            bool[] state = GetDIStatus();
+            return state[_brushesDI[brushNum]];
         }
     }
 }

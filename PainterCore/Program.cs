@@ -1,4 +1,8 @@
-﻿namespace PainterCore
+﻿using JakaAPI.Types.Math;
+using System.Numerics;
+using Vector3 = JakaAPI.Types.Math.Vector3;
+
+namespace PainterCore
 {
     internal class Program
     {
@@ -13,6 +17,19 @@
         {
             //PaintingController paintingController = new(); 
             //paintingController.Start();
+
+            Vector3 axisX = new Vector3(2, 1, 1).Normalized();
+            Vector3 axisY = new Vector3(1, -1, -1).Normalized();
+            Vector3 axisZ = Vector3.VectorProduct(axisX, axisY).Normalized();
+            Console.WriteLine("axisZ: " + axisZ);
+
+            Matrix canvas = new Matrix(axisX, axisY, axisZ);
+            Console.WriteLine("canvas:\n" + canvas);
+
+            RPYRotation rpy = canvas.ToRPY();
+
+            Console.WriteLine("rpy:\n" + rpy);
+
         }
     }
 }
