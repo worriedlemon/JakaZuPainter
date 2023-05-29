@@ -186,6 +186,8 @@ namespace JakaAPI.Types.Math
 
         public Matrix(Vector3 x, Vector3 y, Vector3 z)
         {
+            NbCols = NbRows = 3;
+
             data = new double[3, 3];
             data[0, 0] = x.Dx;
             data[1, 0] = x.Dy;
@@ -276,11 +278,11 @@ namespace JakaAPI.Types.Math
                 theta = SinCos(translate(ry)),
                 psi = SinCos(translate(rz));
 
-            return new(new double[3, 3]
+            return new Matrix(new double[3, 3]
             {
-                { psi.cos * theta.cos, psi.sin * theta.cos, -theta.sin },
-                { psi.cos * theta.sin * phi.sin - psi.sin * phi.cos, psi.sin * theta.sin * phi.sin + psi.cos * phi.cos, theta.cos * phi.sin },
-                { psi.cos * theta.sin * phi.cos + psi.sin * phi.sin, psi.sin * theta.sin * phi.cos - psi.cos * phi.sin, theta.cos * phi.cos }
+                { psi.cos * theta.cos, psi.cos * theta.sin * phi.sin - psi.sin * phi.cos,  psi.cos * theta.sin * phi.cos + psi.sin * phi.sin},
+                { psi.sin * theta.cos, psi.sin * theta.sin * phi.sin + psi.cos * phi.cos, psi.sin * theta.sin * phi.cos - psi.cos * phi.sin },
+                { -theta.sin, theta.cos * phi.sin, theta.cos * phi.cos }
             });
         }
 
@@ -288,16 +290,13 @@ namespace JakaAPI.Types.Math
         {
             DoubleTranslation translate = degrees ? MathDefinitions.RadToDeg : (double arg) => { return arg; };
 
-            double phi = Atan2(data[1, 2], data[2, 2]);
+            double phi = Atan2(data[2, 1], data[2, 2]);
 
             double rx = translate(phi);
-            double rz = translate(Atan2(data[0, 1], data[0, 0]));
-            double ry;
-            if (-1e-9 < phi && phi < 1e-9 || -1e-9 < phi - PI && phi - PI < 1e-9)
-            {
-                ry = translate(Atan2(-data[0, 2], data[2, 2] / Cos(phi)));
-            }
-            else ry = translate(Atan2(-data[0, 2], data[1, 2] / Sin(phi)));
+            double rz = translate(Atan2(data[1, 0], data[0, 0]));
+            double ry = translate(Atan2(-data[2, 0] * Cos(phi), data[2, 2]));
+            
+            //else ry = translate(Atan2(-data[2, 0] * Sin(phi), data[2, 1]));
 
             return new(rx, ry, rz);
         }
@@ -311,6 +310,26 @@ namespace JakaAPI.Types.Math
                     data[i, j] = x;
                 }
             }
+        }
+
+        public static Matrix operator ~(Matrix A)
+        {
+            return A.Transpose();
+        }
+
+        public Matrix Transpose()
+        {
+            double[,] res = new double[NbRows, NbCols];
+
+            for (int i = 0; i < NbRows; i++)
+            {
+                for (int j = 0; j < NbCols; j++)
+                {
+                    res[i, j] = data[j, i];
+                }
+            }
+
+            return new Matrix(res);
         }
 
         public override string ToString()

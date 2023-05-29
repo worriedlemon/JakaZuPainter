@@ -17,7 +17,7 @@ namespace PainterArm
         private CartesianPosition _dryerLocation;
 
         private const double _brushLength = 220;
-        private const double _needleLength = 217;
+        private const double _needleLength = 216;
 
         public int CurrentBrush { get; private set; }
 

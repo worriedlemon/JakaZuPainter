@@ -46,7 +46,7 @@ namespace PainterCore
                     case CodeHPGL.IN:
                         break;
                     case CodeHPGL.PC:
-                        BrushColor(command.Arguments);
+                        //BrushColor(command.Arguments);
                         break;
                     case CodeHPGL.PW:
                         break;
@@ -141,7 +141,7 @@ namespace PainterCore
 
         private void BrushMove(double[] arguments)
         {
-            if (_palette.GetStrokesLeft(_currentColor) == 0)
+            if (false && _palette.GetStrokesLeft(_currentColor) == 0)
             {
                 _palette.UpdateColor(_currentColor);
                 _mixer.MixColor(_palette.GetColorCoordinates(_currentColor), _currentColor);

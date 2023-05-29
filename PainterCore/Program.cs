@@ -15,21 +15,10 @@ namespace PainterCore
 
         static void Main(string[] args)
         {
-            //PaintingController paintingController = new(); 
-            //paintingController.Start();
+            PrintLicenseInfo();
 
-            Vector3 axisX = new Vector3(2, 1, 1).Normalized();
-            Vector3 axisY = new Vector3(1, -1, -1).Normalized();
-            Vector3 axisZ = Vector3.VectorProduct(axisX, axisY).Normalized();
-            Console.WriteLine("axisZ: " + axisZ);
-
-            Matrix canvas = new Matrix(axisX, axisY, axisZ);
-            Console.WriteLine("canvas:\n" + canvas);
-
-            RPYRotation rpy = canvas.ToRPY();
-
-            Console.WriteLine("rpy:\n" + rpy);
-
+            PaintingController paintingController = new(); 
+            paintingController.Start();
         }
     }
 }
