@@ -23,7 +23,7 @@ namespace PainterCore
 
         private ColorRGB _currentColor = new(0, 0, 0);
 
-        private double _brushLength = 217;
+        private double _brushLength = 157.5;
 
         public void Start()
         {

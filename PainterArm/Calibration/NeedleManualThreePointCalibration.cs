@@ -86,7 +86,7 @@ namespace PainterArm.Calibration
             Vector3 vAxisY = ((Vector3)axisY - (Vector3)zero).Normalized();
             Vector3 vAxisZ = CoordinateSystem2D.FixZShiftByPoint(Vector3.VectorProduct(vAxisX, vAxisY).Normalized(), zero, PainterArm.GetRobotData().ArmCartesianPosition.Point);
 
-            Console.WriteLine($"AxisX: {vAxisX} AxisY: {vAxisY} AxisY: {vAxisZ}");
+            Console.WriteLine($"AxisX: {vAxisX}\nAxisY: {vAxisY}\nAxisY: {vAxisZ}");
 
             return (new Matrix(vAxisX, vAxisY, vAxisZ) * (inversed ? -1 : 1)).ToRPY();
         }

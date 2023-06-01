@@ -16,8 +16,8 @@ namespace PainterArm
         private LocationDictionary _brushesLocations;
         private CartesianPosition _dryerLocation;
 
-        private const double _brushLength = 220;
-        private const double _needleLength = 216;
+        private const double _brushLength = 157.5;
+        private const double _needleLength = 157.5;
 
         public int CurrentBrush { get; private set; }
 
@@ -103,20 +103,20 @@ namespace PainterArm
                 height += _currentHeight;
             }
 
-            _currentHeight = height;
+                _currentHeight = height;
 
-            Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX, _currentY, _currentHeight);
+                Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX, _currentY, _currentHeight);
 
-            MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), 100, 25, MovementType.Absolute);
-        }
+                MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), 100, 25, MovementType.Absolute);
+            }
 
-        /// <summary>
-        /// Returns current held brush to the stand
-        /// </summary>
-        public void ReturnCurrentBrush()
-        {
-            CartesianPosition brushPosition = _brushesLocations[CurrentBrush];
-            Point brushPoint = brushPosition.Point;
+            /// <summary>
+            /// Returns current held brush to the stand
+            /// </summary>
+            public void ReturnCurrentBrush()
+            {
+                CartesianPosition brushPosition = _brushesLocations[CurrentBrush];
+                Point brushPoint = brushPosition.Point;
             Point upperPoint = new(brushPoint.X, brushPoint.Y, brushPoint.Z + _brushLength);
             RPYRotation orthogonalRPY = brushPosition.Rpymatrix;
 

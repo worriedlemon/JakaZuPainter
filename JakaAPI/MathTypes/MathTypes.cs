@@ -290,15 +290,22 @@ namespace JakaAPI.Types.Math
         {
             DoubleTranslation translate = degrees ? MathDefinitions.RadToDeg : (double arg) => { return arg; };
 
+            double theta = Asin(-data[2, 0]);
+            double theta2 = PI - theta;
+
             double phi = Atan2(data[2, 1], data[2, 2]);
-
-            double rx = translate(phi);
-            double rz = translate(Atan2(data[1, 0], data[0, 0]));
-            double ry = translate(Atan2(-data[2, 0] * Cos(phi), data[2, 2]));
+            double phi2 = Atan2(-data[2, 1], -data[2, 2]);
             
-            //else ry = translate(Atan2(-data[2, 0] * Sin(phi), data[2, 1]));
+            double psi = Atan2(data[1, 0], data[0, 0]);
+            double psi2 = Atan2(-data[1, 0], -data[0, 0]);
 
-            return new(rx, ry, rz);
+            double rx = translate(phi), ry = translate(theta), rz = translate(psi);
+            double rx2 = translate(phi2), ry2 = translate(theta2), rz2 = translate(psi2);
+
+            Console.WriteLine($"\nMain solution: {rx}, {ry}, {rz}");
+            Console.WriteLine($"Alternative solution: {rx2}, {ry2}, {rz2}\n");
+
+            return new (rx, ry, rz);
         }
 
         private void FillMatrix(double x)
@@ -312,10 +319,7 @@ namespace JakaAPI.Types.Math
             }
         }
 
-        public static Matrix operator ~(Matrix A)
-        {
-            return A.Transpose();
-        }
+        public static Matrix operator ~(Matrix A) => A.Transpose();
 
         public Matrix Transpose()
         {
