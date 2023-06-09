@@ -1,6 +1,7 @@
 ﻿using static System.Math;
 using System.Globalization;
 using System.Text.Json.Serialization;
+using System;
 
 namespace JakaAPI.Types.Math
 {
@@ -103,6 +104,11 @@ namespace JakaAPI.Types.Math
             return new Vector3(vector.Dx * multiplier, vector.Dy * multiplier, vector.Dz * multiplier);
         }
 
+        public static Vector3 operator *(double multiplier, Vector3 vector)
+        {
+            return vector * multiplier;
+        }
+
         public static Vector3 operator /(Vector3 vector, double divider) => vector * (1.0 / divider);
 
         public static explicit operator Point(Vector3 vector) => new Point(vector.Dx, vector.Dy, vector.Dz);
@@ -145,7 +151,17 @@ namespace JakaAPI.Types.Math
         private readonly double[,] data;
         public int NbRows { get; private set; }
         public int NbCols { get; private set; }
-        public double this[int i, int j] => data[i, j];
+        public double this[int i, int j]
+        {
+            get
+            {
+                return data[i, j];
+            }
+            private set
+            {
+                data[i, j] = value;
+            }
+        }
 
         public Matrix(int rows, int cols)
         {
@@ -290,22 +306,72 @@ namespace JakaAPI.Types.Math
         {
             DoubleTranslation translate = degrees ? MathDefinitions.RadToDeg : (double arg) => { return arg; };
 
-            double theta = Asin(-data[2, 0]);
-            double theta2 = PI - theta;
+            Vector3 v = new Vector3(0, 0, 1);
+            Console.WriteLine("\nv: " + v);
 
-            double phi = Atan2(data[2, 1], data[2, 2]);
-            double phi2 = Atan2(-data[2, 1], -data[2, 2]);
-            
-            double psi = Atan2(data[1, 0], data[0, 0]);
-            double psi2 = Atan2(-data[1, 0], -data[0, 0]);
+            Vector3 u = new Vector3(data[0, 2], data[1, 2], data[2, 2]);
+            Console.WriteLine("\nu: " + u);
 
-            double rx = translate(phi), ry = translate(theta), rz = translate(psi);
-            double rx2 = translate(phi2), ry2 = translate(theta2), rz2 = translate(psi2);
+            double c = Vector3.DotProduct(v, u);
+            Console.WriteLine("\nc: " + c);
 
-            Console.WriteLine($"\nMain solution: {rx}, {ry}, {rz}");
-            Console.WriteLine($"Alternative solution: {rx2}, {ry2}, {rz2}\n");
+            double s = Vector3.VectorProduct(u, v).Length();
+            Console.WriteLine("\ns: " + s);
 
-            return new (rx, ry, rz);
+            Matrix G = new Matrix(new double[3, 3]
+            {
+                { c, s, 0},
+                { -s, c, 0},
+                { 0, 0, 1},
+            });
+            Console.WriteLine("\nG: " + G);
+
+            Vector3 w = u.Normalized();
+            Console.WriteLine("\nw: " + w);
+
+            Vector3 k = (v - c * u).Normalized();
+            Console.WriteLine("\nk: " + k);
+
+            Vector3 r = Vector3.VectorProduct(u, v).Normalized();
+            Console.WriteLine("\nr: " + r);
+
+            Matrix F = new Matrix(w, k, r).Transpose();
+            Console.WriteLine("\nF: " + F);
+
+            Matrix F1 = F.Rounded(4).ReverseMatrix();
+            Console.WriteLine("\nF1: " + F1);
+
+            Matrix U1 = F1 * G;
+            Console.WriteLine("\nU1: " + U1);
+
+            Matrix U = U1 * F;
+            Console.WriteLine("\nU: " + U);
+
+            double ry1 = Asin(-U[2, 0]);
+            Console.WriteLine("\nry1: " + ry1);
+
+            double ry2 = PI - ry1;
+            Console.WriteLine("\nry2: " + ry2);
+
+            double rz1 = translate(Atan2(U[1, 0] / Cos(ry1), U[0, 0] / Cos(ry1)));
+            Console.WriteLine("\nrz1: " + rz1);
+
+            double rz2 = translate(Atan2(U[1, 0] / Cos(ry2), U[0, 0] / Cos(ry2)));
+            Console.WriteLine("\nrz2: " + rz2);
+
+            double rx1 = translate(Atan2(U[2, 1] / Cos(ry1), U[2, 2] / Cos(ry1)));
+            Console.WriteLine("\nrx1: " + rx1);
+
+            double rx2 = translate(Atan2(U[2, 1] / Cos(ry2), U[2, 2] / Cos(ry2)));
+            Console.WriteLine("\nrx2: " + rx2);
+
+            ry1 = translate(ry1);
+            ry2 = translate(ry2);
+
+            Console.WriteLine($"\nAlt solution: {rx1}, {ry1}, {rz1}");
+            Console.WriteLine($"\nMain solution: {rx2}, {ry2}, {rz2}");
+
+            return new(rx1, ry1, rz1);
         }
 
         private void FillMatrix(double x)
@@ -321,6 +387,21 @@ namespace JakaAPI.Types.Math
 
         public static Matrix operator ~(Matrix A) => A.Transpose();
 
+        public Matrix Rounded(int digits)
+        {
+            double[,] rounded_data = (double[,])data.Clone();
+
+            for (int i = 0; i < NbRows; i++)
+            {
+                for (int j = 0; j < NbCols; j++)
+                {
+                    rounded_data[i, j] = System.Math.Round(data[i, j], digits);
+                }
+            }
+
+            return new Matrix(rounded_data);
+        }
+
         public Matrix Transpose()
         {
             double[,] res = new double[NbRows, NbCols];
@@ -334,6 +415,120 @@ namespace JakaAPI.Types.Math
             }
 
             return new Matrix(res);
+        }
+
+        private void SwapRows(int row1, int row2)
+        {
+            for (int j = 0; j < NbCols; j++)
+            {
+                double temp = this[row1, j];
+                this[row1, j] = this[row2, j];
+                this[row2, j] = temp;
+            }
+        }
+
+        public Matrix ReverseMatrix()
+        {
+            int n = NbRows; // Количество строк в исходной матрице
+            int m = NbCols; // Количество столбцов в исходной матрице
+
+            Matrix augmentedMatrix = new Matrix(n, 2 * m);
+            for (int i = 0; i < n; i++)
+            {
+                for (int j = 0; j < m; j++)
+                {
+                    augmentedMatrix[i, j] = this[i, j]; // Копируем элементы исходной матрицы
+                }
+                augmentedMatrix[i, m + i] = 1; // Заполняем единичную матрицу
+            }
+
+            // Применяем алгоритм Гаусса-Жордана
+            for (int i = 0; i < n; i++)
+            {
+                // Если диагональный элемент равен нулю, меняем строки местами
+                if (augmentedMatrix[i, i] == 0)
+                {
+                    int swapRow = -1;
+                    for (int k = i + 1; k < n; k++)
+                    {
+                        if (augmentedMatrix[k, i] != 0)
+                        {
+                            swapRow = k;
+                            break;
+                        }
+                    }
+                    if (swapRow == -1)
+                    {
+                        throw new InvalidOperationException("Матрица вырожденная, обратной матрицы не существует.");
+                    }
+                    augmentedMatrix.SwapRows(i, swapRow);
+                }
+
+                // Делаем диагональный элемент равным 1
+                double scale = augmentedMatrix[i, i];
+                for (int j = 0; j < 2 * m; j++)
+                {
+                    augmentedMatrix[i, j] /= scale;
+                }
+
+                // Обнуляем остальные элементы в столбце
+                for (int k = 0; k < n; k++)
+                {
+                    if (k != i)
+                    {
+                        double factor = augmentedMatrix[k, i];
+                        for (int j = 0; j < 2 * m; j++)
+                        {
+                            augmentedMatrix[k, j] -= factor * augmentedMatrix[i, j];
+                        }
+                    }
+                }
+            }
+
+            // Создаем и возвращаем обратную матрицу
+            Matrix inverseMatrix = new Matrix(n, m);
+            for (int i = 0; i < n; i++)
+            {
+                for (int j = 0; j < m; j++)
+                {
+                    inverseMatrix[i, j] = augmentedMatrix[i, m + j];
+                }
+            }
+            return inverseMatrix;
+        }
+
+        // Ax = B
+        public static Matrix SolveLinearEquation(Matrix A, Matrix B)
+        {
+            Matrix identity = new Matrix(A);
+            Matrix result = new Matrix(B);
+
+            for (int i = 0; i < identity.NbRows; i++)
+            {
+                for (int k = 0; k < identity.NbRows; k++)
+                {
+                    double coef;
+                    if (k == i)
+                    {
+                        coef = identity[i, i];
+                        for (int j = 0; j < identity.NbCols; j++)
+                        {
+                            identity[k, j] /= coef;
+                        }
+                        result[k, 0] /= coef;
+                    }
+                    else
+                    {
+                        coef = identity[k, i] / identity[i, i];
+                        for (int j = 0; j < identity.NbCols; j++)
+                        {
+                            identity[k, j] -= coef * identity[i, j];
+                        }
+                        result[k, 0] -= coef * B[i, 0];
+                    }
+                }
+            }
+            return result;
         }
 
         public override string ToString()
