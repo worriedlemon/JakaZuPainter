@@ -21,7 +21,15 @@ namespace PainterArm
 
         public int CurrentBrush { get; private set; }
 
-        private Dictionary<int, int> _brushesDI;
+        private readonly Dictionary<int, int> _brushesDI = new()
+            {
+                { 0, 9 }, // Change to actual DIs
+                { 1, 10 },
+                { 2, 11 },
+                { 3, 12 },
+                { 4, 13 },
+                { 5, 14 },
+            };
 
         /// <summary>
         /// Indicates whether the grip of the robot is being in grap state
@@ -44,16 +52,6 @@ namespace PainterArm
             CanvasCalibrationBehavior = new NeedleManualThreePointCalibration(this, _needleLength);
             DryerCalibrationBehavior = new ManualOnePointCalibration(this);
             BrushesCalibrationBehavior = new ManualOnePointCalibration(this);
-
-            _brushesDI = new Dictionary<int, int>()
-            {
-                { 0, 5 }, // Change to actual DIs
-                { 1, 6 },
-                { 2, 7 },
-                { 3, 8 },
-                { 4, 9 },
-                { 5, 10 },
-            };
         }
 
         /// <summary>
@@ -83,7 +81,7 @@ namespace PainterArm
             MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), 100, 25, MovementType.Absolute);
         }
 
-        // Create water vortex, not implemented yet
+        // Raw method, will be implemented soon
         public void MixWater()
         {
             Console.WriteLine("Water vortex start...");
@@ -103,7 +101,7 @@ namespace PainterArm
                 height += _currentHeight;
             }
 
-            _currentHeight = height;
+            _currentHeight = (movementType == MovementType.Relative) ? _currentHeight + height : height;
 
             Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX, _currentY, _currentHeight);
 
@@ -199,19 +197,27 @@ namespace PainterArm
             MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
         }
 
-        // Grip methods
+        /// <summary>
+        /// Sets the state of the grip to <b>ON</b>
+        /// </summary>
         public void GripOn()
         {
             _grip = true;
             SetDOState(0, 0, _grip);
         }
 
+        /// <summary>
+        /// Sets the state of the grip to <b>OFF</b>
+        /// </summary>
         public void GripOff()
         {
             _grip = false;
             SetDOState(0, 0, _grip);
         }
 
+        /// <summary>
+        /// Toggles the state of the grip
+        /// </summary>
         [Obsolete("Not recommended to use, consider using explicit methods GripOn and GripOff")]
         public void ToggleGrip()
         {
@@ -219,10 +225,10 @@ namespace PainterArm
             SetDOState(0, 0, _grip);
         }
 
-        public bool GetBrushState(int brushNum)
+        public BrushSlotState GetBrushState(int brushNum)
         {
-            bool[] state = GetDIStatus();
-            return state[_brushesDI[brushNum]];
+            bool[] states = GetDIStatus();
+            return states[_brushesDI[brushNum]] ? BrushSlotState.EMPTY : BrushSlotState.OCCUPIED;
         }
     }
 }

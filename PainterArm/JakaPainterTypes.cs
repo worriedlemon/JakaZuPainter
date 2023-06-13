@@ -4,6 +4,12 @@ using System.Text.Json.Serialization;
 
 namespace PainterArm
 {
+    public enum BrushSlotState
+    {
+        EMPTY,
+        OCCUPIED
+    }
+
     /// <summary>
     /// Structure for representing a 2-dimentional coordinate system
     /// </summary>
@@ -75,7 +81,7 @@ namespace PainterArm
         /// <param name="x">X position on a canvas in units</param>
         /// <param name="y">Y position on a canvas in units</param>
         /// <param name="z">Z shifting perpendicular to canvas</param>
-        /// <returns></returns>
+        /// <returns><see cref="Point"/> of the canvas in robot coordinates</returns>
         /// <exception cref="ArgumentException"></exception>
         public Point CanvasPointToWorldPoint(double x, double y, double z = 0)
         {
@@ -83,6 +89,13 @@ namespace PainterArm
             return (Point)((Vector3)Zero + _axisX * x + _axisY * y + _zShift * z);
         }
 
+        /// <summary>
+        /// Returns the vector perpendicular to the canvas in the specific direction
+        /// </summary>
+        /// <param name="zShift">Original vector</param>
+        /// <param name="zero">Zero of the system</param>
+        /// <param name="directionPoint">Point of vector direction</param>
+        /// <returns>Fixed <see cref="Vector3"/></returns>
         public static Vector3 FixZShiftByPoint(Vector3 zShift, Point zero, Point directionPoint)
         {
             return (Vector3.DotProduct((Vector3)directionPoint - (Vector3)zero, zShift) > 0) ? zShift : -zShift;
