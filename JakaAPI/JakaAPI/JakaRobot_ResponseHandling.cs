@@ -4,8 +4,8 @@ namespace JakaAPI
 {
     public partial class JakaRobot
     {
-        delegate void DebugInformation(string message);
-        event DebugInformation? FunctionFeedback;
+        public delegate void DebugInformation(string message);
+        private event DebugInformation? FunctionFeedback;
 
         private readonly int _commandDelay = 50;
 
@@ -13,11 +13,21 @@ namespace JakaAPI
 
         // Currently unused
         private string _lastListeningResponse = string.Empty;
-      
+
+        public void DebugSubscribe(DebugInformation debug)
+        {
+            FunctionFeedback += debug;
+        }
+
+        public void DebugUnSubscribe(DebugInformation debug)
+        {
+            FunctionFeedback -= debug;
+        }
+
         protected void OnPostCommand()
         {
             _lastSendingResponse = ReadSendingResponse();
-            WaitComplete();            
+            WaitComplete();
             ReadSendingResponse();
             FunctionFeedback?.Invoke(_lastSendingResponse);
             Thread.Sleep(_commandDelay);

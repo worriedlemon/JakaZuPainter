@@ -15,3 +15,6 @@ This project is sponsored by [**Saint-Petersburg ETU**](https://en.wikipedia.org
 Jaka Zu trademark, roboarm and its internal commands are a property of [**Jaka Robotics Co., Ltd**](https://www.jakarobotics.com/) ([**节卡机器人股份有限公司**](https://www.jaka.com/)).
 
 This code, based on Jaka TCP commands, is being developed by *E. Shteinberg and A. Skuratov*.
+
+## Special mentions
++ *MrMendeleev* - Math help

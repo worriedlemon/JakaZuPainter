@@ -38,11 +38,11 @@ namespace JakaAPI.Types
         public override string ToString()
         {
             return 
-               $"[{J1.ToString(CultureInfo.InvariantCulture)}" +
-               $"{J2.ToString(CultureInfo.InvariantCulture)}" +
-               $"{J3.ToString(CultureInfo.InvariantCulture)}" +
-               $"{J4.ToString(CultureInfo.InvariantCulture)}" +
-               $"{J5.ToString(CultureInfo.InvariantCulture)}" +
+               $"[{J1.ToString(CultureInfo.InvariantCulture)}," +
+               $"{J2.ToString(CultureInfo.InvariantCulture)}," +
+               $"{J3.ToString(CultureInfo.InvariantCulture)}," +
+               $"{J4.ToString(CultureInfo.InvariantCulture)}," +
+               $"{J5.ToString(CultureInfo.InvariantCulture)}," +
                $"{J6.ToString(CultureInfo.InvariantCulture)}]";
         }
     }

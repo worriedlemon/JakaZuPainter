@@ -24,8 +24,7 @@ namespace JakaAPI.Types
         public Math.CartesianPosition ArmCartesianPosition { get; private set; }
 
         public RobotData(string rawJson)
-        {
-            
+        {            
             JsonObject jsonObject = JsonNode.Parse(rawJson)!.AsObject();
 
             double[] jointsArr = jsonObject["joint_actual_position"]!.AsArray().Deserialize<double[]>()!;

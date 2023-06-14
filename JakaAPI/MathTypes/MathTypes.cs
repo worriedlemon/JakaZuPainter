@@ -1,14 +1,18 @@
-﻿using System.Globalization;
+﻿using static System.Math;
+using System.Globalization;
 using System.Text.Json.Serialization;
 
 namespace JakaAPI.Types.Math
 {
+    using DoubleTranslation = Func<double, double>;
+
     public struct CartesianPosition
     {
         public Point Point { get; private set; }
-        public RPYMatrix Rpymatrix { get; private set; }
+        public RPYRotation Rpymatrix { get; private set; }
 
-        public CartesianPosition(Point point, RPYMatrix rpymatrix)
+        [JsonConstructor]
+        public CartesianPosition(Point point, RPYRotation rpymatrix)
         {
             Point = point;
             Rpymatrix = rpymatrix;
@@ -17,7 +21,7 @@ namespace JakaAPI.Types.Math
         public CartesianPosition(double x, double y, double z, double rx, double ry, double rz)
         {
             Point = new Point(x, y, z);
-            Rpymatrix = new RPYMatrix(rx, ry, rz);
+            Rpymatrix = new RPYRotation(rx, ry, rz);
         }
 
         public CartesianPosition(double[] pos) : this(pos[0], pos[1], pos[2], pos[3], pos[4], pos[5])
@@ -68,7 +72,7 @@ namespace JakaAPI.Types.Math
     }
 
     /// <summary>
-    /// A structure which represents a geometric vector in 3 dimentions
+    /// A structure, which represents a geometric vector in 3 dimentions
     /// </summary>
     public class Vector3
     {
@@ -76,7 +80,7 @@ namespace JakaAPI.Types.Math
         public double Dy { get; private set; }
         public double Dz { get; private set; }
 
-        private Vector3() { }
+        public Vector3() { }
 
         public Vector3(double x, double y, double z)
         {
@@ -85,26 +89,22 @@ namespace JakaAPI.Types.Math
             Dz = z;
         }
 
-        public static Vector3 operator +(Vector3 first, Vector3 second)
-        {
-            return new Vector3(first.Dx + second.Dx, first.Dy + second.Dy, first.Dz + second.Dz);
-        }
+        public static Vector3 operator +(Vector3 first, Vector3 second) => new(first.Dx + second.Dx, first.Dy + second.Dy, first.Dz + second.Dz);
 
-        public static Vector3 operator -(Vector3 vector) => new Vector3(-vector.Dx, -vector.Dy, -vector.Dz);
+        public static Vector3 operator -(Vector3 vector) => new(-vector.Dx, -vector.Dy, -vector.Dz);
 
         public static Vector3 operator -(Vector3 first, Vector3 second) => first + (-second);
 
-        public static Vector3 operator *(Vector3 vector, double multiplier)
-        {
-            return new Vector3(vector.Dx * multiplier, vector.Dy * multiplier, vector.Dz * multiplier);
-        }
+        public static Vector3 operator *(Vector3 vector, double multiplier) => new(vector.Dx * multiplier, vector.Dy * multiplier, vector.Dz * multiplier);
+
+        public static Vector3 operator *(double multiplier, Vector3 vector) => vector * multiplier;
 
         public static Vector3 operator /(Vector3 vector, double divider) => vector * (1.0 / divider);
 
-        public static explicit operator Point(Vector3 vector) => new Point(vector.Dx, vector.Dy, vector.Dz);
+        public static explicit operator Point(Vector3 vector) => new(vector.Dx, vector.Dy, vector.Dz);
 
         /// <returns>The length of this <see cref="Vector3"> instance</returns>
-        public double Length() => System.Math.Sqrt(Dx * Dx + Dy * Dy + Dz * Dz);
+        public double Length() => Sqrt(Dx * Dx + Dy * Dy + Dz * Dz);
 
         /// <returns>A <see cref="Vector3"/> with the unit length and the same direction as the base</returns>
         /// <exception cref="DivideByZeroException"></exception>
@@ -122,21 +122,12 @@ namespace JakaAPI.Types.Math
         /// <param name="b">Second vector</param>
         /// <param name="needNormalization"><see cref="Boolean"> to set whether vectors should be normalized in advance</param>
         /// <returns>A new <see cref="Vector3"/>, which is directed perpendicular to <i>a</i> and <i>b</i></returns>
-        public static Vector3 VectorProduct(Vector3 a, Vector3 b, bool needNormalization = true)
-        {
-            Vector3 vectorA = a, vectorB = b;
-            if (needNormalization)
-            {
-                vectorA = vectorA.Normalized();
-                vectorB = vectorB.Normalized();
-            }
-            return new Vector3()
-            {
-                Dx = vectorA.Dy * vectorB.Dz - vectorA.Dz * vectorB.Dy,
-                Dy = vectorA.Dz * vectorB.Dx - vectorA.Dx * vectorB.Dz,
-                Dz = vectorA.Dx * vectorB.Dy - vectorA.Dy * vectorB.Dx
-            };
-        }
+        public static Vector3 VectorProduct(Vector3 a, Vector3 b) => new(a.Dy * b.Dz - a.Dz * b.Dy, a.Dz * b.Dx - a.Dx * b.Dz, a.Dx * b.Dy - a.Dy * b.Dx);
+
+        /// <param name="a">First vector</param>
+        /// <param name="b">Second vector</param>
+        /// <returns>A <see cref="double"/> value, representing dot product of two vectors</returns>
+        public static double DotProduct(Vector3 a, Vector3 b) => a.Dx * b.Dx + a.Dy * b.Dy + a.Dz * b.Dz;
 
         public override string ToString()
         {
@@ -146,18 +137,23 @@ namespace JakaAPI.Types.Math
         }
     }
 
-    public struct RPYMatrix
+    /// <summary>
+    /// A structure, which represents Roll-Pitch-Yaw rotation (Tait-Bryan angles in degrees)
+    /// </summary>
+    public struct RPYRotation
     {
         public double Rx { get; private set; }
         public double Ry { get; private set; }
         public double Rz { get; private set; }
 
         [JsonConstructor]
-        public RPYMatrix(double rx, double ry, double rz)
+        public RPYRotation(double rx, double ry, double rz)
         {
             Rx = rx;
             Ry = ry;
             Rz = rz;
         }
+
+        public override string ToString() => $"Roll: {Rx}, Pitch: {Ry}, Yaw: {Rz}";
     }
 }

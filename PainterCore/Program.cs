@@ -1,4 +1,7 @@
-﻿using PainterArm;
+﻿using JakaAPI.Types.Math;
+using PainterArm;
+using System.Numerics;
+using Vector3 = JakaAPI.Types.Math.Vector3;
 
 namespace PainterCore
 {
@@ -14,15 +17,9 @@ namespace PainterCore
         static void Main(string[] args)
         {
             PrintLicenseInfo();
-
+            
             PaintingController paintingController = new(); 
             paintingController.Start();
-
-            /*JakaPainter painter = new("192.168.1.101");
-            painter.MoveLinear(new CartesianPosition(0, 0, 30, 0, 0, 0), 10, 5, MovementType.Relative);
-            //painter.WaitComplete();
-            painter.MoveLinear(new CartesianPosition(0, 0, -30, 0, 0, 0), 10, 5, MovementType.Relative);*/
-            //painter.WaitComplete();
         }
     }
 }

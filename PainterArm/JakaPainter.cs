@@ -1,6 +1,7 @@
 ﻿using JakaAPI.Types;
 using JakaAPI.Types.Math;
 using JakaAPI;
+using PainterArm.Calibration;
 
 namespace PainterArm
 {
@@ -10,153 +11,65 @@ namespace PainterArm
     public class JakaPainter : JakaRobot
     {
         private CoordinateSystem2D? _canvasCoordinateSystem;
+        private double _currentX, _currentY, _currentHeight;
 
-        private Dictionary<int, CartesianPosition> _brushesLocations;
-        private CartesianPosition _washerLocation;
+        private LocationDictionary _brushesLocations;
         private CartesianPosition _dryerLocation;
 
-        private int _currentBrush = -1;
+        private const double _brushLength = 157.5;
+        private const double _needleLength = 157.5;
+
+        public int CurrentBrush { get; private set; }
+
+        private readonly Dictionary<int, int> _brushesDI = new()
+            {
+                { 0, 9 }, // Change to actual DIs
+                { 1, 10 },
+                { 2, 11 },
+                { 3, 12 },
+                { 4, 13 },
+                { 5, 14 },
+            };
 
         /// <summary>
         /// Indicates whether the grip of the robot is being in grap state
         /// </summary>
         private bool _grip;
 
+        public AbstractCalibrationBehavior CanvasCalibrationBehavior, BrushesCalibrationBehavior, DryerCalibrationBehavior;
+
         public JakaPainter(string domain, int portSending = 10001, int portListening = 10000)
             : base(domain, portSending, portListening)
         {
-            _brushesLocations = new Dictionary<int, CartesianPosition>();
-            _grip = false;
+            _brushesLocations = new LocationDictionary();
+            _grip = true;
+            _currentX = 0;
+            _currentY = 0;
+            _currentHeight = 0;
+
+            CurrentBrush = -1;
             SetDOState(0, 0, _grip);
-        }
-
-        /// <summary>
-        /// Manual canvas calibration by three points
-        /// </summary>
-        public CoordinateSystem2D CalibrateSurface()
-        {
-            byte complete = 0;
-            Point zero = new(), axisX = new(), axisY = new();
-            RPYMatrix canvasRPY = new(180, 0, 0);
-            
-            Console.WriteLine("---- [Surface calibration] ----\n" +
-                "(1) Set zero pivot point\n" +
-                "(2) Set X-axis point\n" +
-                "(3) Set Y-axis point\n" +
-                "(0) End calibration");
-
-            while (true)
-            {
-                int option = Int32.Parse(Console.ReadLine());
-                switch (option)
-                {
-                    case 1:
-                        zero = GetRobotData().ArmCartesianPosition.Point;
-                        canvasRPY = GetRobotData().ArmCartesianPosition.Rpymatrix;
-                        complete |= 1;
-                        break;
-                    case 2:
-                        axisX = GetRobotData().ArmCartesianPosition.Point;
-                        complete |= 2;
-                        break;
-                    case 3:
-                        axisY = GetRobotData().ArmCartesianPosition.Point;
-                        complete |= 4;
-                        break;
-                    case 0:
-                        if (complete != 7)
-                        {
-                            Console.WriteLine("Calibration is not complete. Set missing points");
-                            break;
-                        }
-
-                        _canvasCoordinateSystem = new(zero, axisX, axisY, canvasRPY);
-
-                        Console.WriteLine($"Calibrated coordinates:\n{_canvasCoordinateSystem}");
-
-                        return _canvasCoordinateSystem;
-                }
-            }
+            CanvasCalibrationBehavior = new NeedleManualThreePointCalibration(this, _needleLength);
+            DryerCalibrationBehavior = new ManualOnePointCalibration(this);
+            BrushesCalibrationBehavior = new ManualOnePointCalibration(this);
         }
 
         /// <summary>
         /// Canvas calibration based on existing <see cref="CoordinateSystem2D"/>
         /// </summary>
         /// <param name="cs">Existing coordinate system to be used as canvas</param>
-        public void CalibrateSurface(CoordinateSystem2D cs)
-        {
-            _canvasCoordinateSystem = cs;
-            Console.WriteLine($"Calibrated coordinates:\n{_canvasCoordinateSystem}");
-        }
+        public void CalibrateCanvas(CoordinateSystem2D cs) => _canvasCoordinateSystem = cs;
 
         /// <summary>
-        /// Brushes calibration by a point
+        /// Brushes calibration
         /// </summary>
-        public void CalibrateBrushes()
-        {
-            Console.WriteLine("---- [Brushes calibration] ----\n" +
-                "(1) Add new brush location\n" +
-                "(0) End calibration");
-
-            while (true)
-            {
-                int option = Int32.Parse(Console.ReadLine());
-                switch (option)
-                {
-                    case 1:
-                        _brushesLocations.Add(_brushesLocations.Count, GetRobotData().ArmCartesianPosition);
-                        break;
-                    case 2:
-                        return;
-                }
-            }
-        }
+        public void CalibrateBrushes(LocationDictionary locations) => _brushesLocations = locations;
 
         /// <summary>
-        /// Washer calibration by a point
+        /// Dryer calibration
         /// </summary>
-        public void CalibrateWasher()
-        {
-            Console.WriteLine("---- [Washer calibration] ----\n" +
-                "(1)Add washer location\n" +
-                "(0)End calibration");
-            while (true)
-            {
-                int option = Int32.Parse(Console.ReadLine());
-                switch (option)
-                {
-                    case 1:
-                        _washerLocation = GetRobotData().ArmCartesianPosition;
-                        break;
-                    case 0:
-                        return;
-                }
-            }
+        public void CalibrateDryer(CartesianPosition location) => _dryerLocation = location;
 
-        }
-
-        /// <summary>
-        /// Dryer calibration by a point
-        /// </summary>
-        public void CalibrateDryer()
-        {
-            Console.WriteLine("---- [Dryer calibration] ----\n" +
-                "(1) Add dryer location\n" +
-                "(0) End calibration");
-            while (true)
-            {
-                int option = Int32.Parse(Console.ReadLine());
-                switch (option)
-                {
-                    case 1:
-                        _dryerLocation = GetRobotData().ArmCartesianPosition;
-                        break;
-                    case 2:
-                        return;
-                }
-            }
-        }
-        
         /// <summary>
         /// Draw line with canvas 2D coordinates
         /// </summary>
@@ -164,76 +77,166 @@ namespace PainterArm
         /// <param name="y">Y-axis offset in millimeters</param>
         public void DrawLine(double x, double y)
         {
-            Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(x, y);
-            Console.WriteLine(point3d);
-
-            MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.CanvasRPY), 10, 5, MovementType.Absolute);
+            Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX = x, _currentY = y, _currentHeight);
+            MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), 100, 25, MovementType.Absolute);
         }
 
-        // Put current brush to [washer -> dryer -> active zone] cycle
-        public void PutAsideBrush()
+        // Raw method, will be implemented soon
+        public void MixWater()
         {
-            //UpdateBrushesState();
+            Console.WriteLine("Water vortex start...");
+            Thread.Sleep(1000);
+            Console.WriteLine("Water vortex end...");
         }
 
-        // Pick new clear brush
-        public void PickNewBrush()
+        /// <summary>
+        /// Move the brush perpendicular to the canvas
+        /// </summary>
+        /// <param name="height">Z-axis offset</param>
+        /// <param name="movementType">Brush movement type, absolute or relative</param>
+        public void BrushOrthogonalMove(double height, MovementType movementType)
         {
-            CartesianPosition brushPosition = _brushesLocations[0];
+            _currentHeight = (movementType == MovementType.Relative) ? _currentHeight + height : height;
+
+            Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX, _currentY, _currentHeight);
+
+            MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), 100, 25, MovementType.Absolute);
+        }
+
+        /// <summary>
+        /// Returns current held brush to the stand
+        /// </summary>
+        public void ReturnCurrentBrush()
+        {
+            CartesianPosition brushPosition = _brushesLocations[CurrentBrush];
             Point brushPoint = brushPosition.Point;
-            Point upperPoint = new Point(brushPoint.X, brushPoint.Y, brushPoint.Z + 30);
-            RPYMatrix orthogonalRPY = brushPosition.Rpymatrix;
+            Point upperPoint = new(brushPoint.X, brushPoint.Y, brushPoint.Z + _brushLength);
+            RPYRotation orthogonalRPY = brushPosition.Rpymatrix;
+
+            // Move to position above the brush
+            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
+
+            // Move to the brush on stand
+            MoveLinear(new CartesianPosition(brushPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
+
+            GripOff();
+
+            // Move to position above the stand again
+            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
+
+            CurrentBrush = -1;
+        }
+
+        /// <summary>
+        /// Returns current held brush to the stand
+        /// </summary>
+        public void PickNewBrush(int num)
+        {
+            CurrentBrush = num;
+            CartesianPosition brushPosition = _brushesLocations[num];
+            Point brushPoint = brushPosition.Point;
+            Point upperPoint = new Point(brushPoint.X, brushPoint.Y, brushPoint.Z + _brushLength);
+            RPYRotation orthogonalRPY = brushPosition.Rpymatrix;
 
             // Move to position above the brush
             MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
 
             GripOff();
 
-            // Move to brush on stand
+            // Move to the brush on stand
             MoveLinear(new CartesianPosition(brushPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
 
             GripOn();
 
-            // Move to position above the palete again
+            // Move to position above the stand again
             MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
-            //UpdateBrushesState();
         }
 
         // Dunk current brush it the palette color
-        public void DunkBrush(CartesianPosition colorPosition)
+        public void DunkBrushInColor(CartesianPosition colorPosition)
         {
             Point colorPoint = colorPosition.Point;
-            Point upperPoint = new Point(colorPoint.X, colorPoint.Y, colorPoint.Z + 30);
-            // Grip position, orthogonal to the palette surface
-            RPYMatrix orthogonalRPY = new RPYMatrix(-180, 0, 0);
+            Point upperPoint = new Point(colorPoint.X, colorPoint.Y, colorPoint.Z + _brushLength);
+            RPYRotation orthogonalRPY = colorPosition.Rpymatrix;
 
             // Move to position above the palete
-            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 10, 5, MovementType.Absolute);
+            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
 
             // Move to color on palette
-            MoveLinear(new CartesianPosition(colorPoint, orthogonalRPY), 10, 5, MovementType.Absolute);
+            MoveLinear(new CartesianPosition(colorPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
 
             // Move to position above the palete again
-            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 10, 5, MovementType.Absolute);
+            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
         }
 
-        // Grip methods
+        public void DryCurrentBrush()
+        {
+            Point dryerPoint = _dryerLocation.Point;
+            Point upperPoint = new Point(dryerPoint.X, dryerPoint.Y, dryerPoint.Z + _brushLength);
+            RPYRotation orthogonalRPY = _dryerLocation.Rpymatrix;
+
+            // Move to position above the dryer
+            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
+
+            // Move to dryer
+            MoveLinear(new CartesianPosition(dryerPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
+
+            int rotationCount = 3;
+            for (int i = 0; i < rotationCount; i++)
+            {
+                double c = Math.Pow(-1, i);
+                JointMove(new JointsPosition(0, 0, 0, 0, 0, c * 30), 100, 100, MovementType.Relative);
+            }
+
+            // Move to position above the dryer again
+            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
+        }
+
+        /// <summary>
+        /// Sets the state of the grip to <b>ON</b>
+        /// </summary>
         public void GripOn()
         {
             _grip = true;
             SetDOState(0, 0, _grip);
         }
 
+        /// <summary>
+        /// Sets the state of the grip to <b>OFF</b>
+        /// </summary>
         public void GripOff()
         {
             _grip = false;
             SetDOState(0, 0, _grip);
         }
 
+        /// <summary>
+        /// Toggles the state of the grip
+        /// </summary>
+        [Obsolete("Not recommended to use, consider using explicit methods GripOn and GripOff")]
         public void ToggleGrip()
         {
             _grip = !_grip;
             SetDOState(0, 0, _grip);
         }
+
+        /// <summary>
+        /// Getting brush slot state based on Hall sensor:<br/>
+        /// - <i>High voltage</i> means <i>no magnetic field</i>, a.k.a. no brush in the slot<br/>
+        /// - <i>Low voltage</i> means <i>magnetic field presence</i>, a.k.a. brush is in the slot 
+        /// </summary>
+        /// <param name="brushNum"></param>
+        /// <returns><see cref="BrushSlotState.EMPTY"/> if input contains high voltage signal, <see cref="BrushSlotState.OCCUPIED"/> otherwise</returns>
+        public BrushSlotState GetBrushState(int brushNum)
+        {
+            bool[] states = GetDIStatus();
+            return states[_brushesDI[brushNum]] ? BrushSlotState.EMPTY : BrushSlotState.OCCUPIED;
+        }
+
+        /// <summary>
+        /// Enabled/disables brush holder checker by applying state to specific pin
+        /// </summary>
+        /// <param name="enable">If true, checker will be enabled, else it will be disabled</param>
+        public void SetBrushHolderCheckingState(bool enable) => SetDOState(0, 9, enable);
     }
 }

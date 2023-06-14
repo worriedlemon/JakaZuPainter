@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Text.Json.Nodes;
 using JakaAPI.Types;
 using JakaAPI.Types.Math;
+using System.Text.Json;
 
 namespace JakaAPI
 {
@@ -15,8 +16,6 @@ namespace JakaAPI
         private readonly Socket _socketSending;
 
         private readonly Socket _socketListening;
-
-        private bool _debugMode = true;
 
         /// <summary>
         /// Constructor for Jaka Robot instance
@@ -31,8 +30,6 @@ namespace JakaAPI
 
             _socketListening = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _socketListening.Connect(new IPEndPoint(IPAddress.Parse(domain), portListening));
-            
-            if (_debugMode) FunctionFeedback += Console.WriteLine;
         }
 
         #region Powering and connection commands
@@ -177,7 +174,7 @@ namespace JakaAPI
         /// <param name="movementType">Type of a movement (absolute or relative)</param>
         public void JointMove(JointsPosition jointPositions, double speed, double acceleration, MovementType movementType)
         {
-            byte[] command = JakaCommand.BuildAsByteArray("joint_move", 
+            byte[] command = JakaCommand.BuildAsByteArray("joint_move",
                 new CommandParameter("jointPosition", $"{jointPositions}"),
                 new CommandParameter("speed", speed.ToString(CultureInfo.InvariantCulture)),
                 new CommandParameter("accel", acceleration.ToString(CultureInfo.InvariantCulture)),
@@ -199,7 +196,7 @@ namespace JakaAPI
                 new CommandParameter("speed", speed.ToString(CultureInfo.InvariantCulture)),
                 new CommandParameter("accel", acceleration.ToString(CultureInfo.InvariantCulture)));
             _socketSending.Send(command);
-            
+
             OnPostCommand();
         }
 
@@ -218,7 +215,7 @@ namespace JakaAPI
                 new CommandParameter("accel", acceleration.ToString(CultureInfo.InvariantCulture)),
                 new CommandParameter("relFlag", $"{(int)movementType}"));
             _socketSending.Send(command);
-            
+
             OnPostCommand();
         }
 
@@ -229,11 +226,14 @@ namespace JakaAPI
         /// <summary>
         /// Function for getting digital input status
         /// </summary>
-        public void GetDIStatus()
+        public bool[] GetDIStatus()
         {
             byte[] command = JakaCommand.BuildAsByteArray("get_digital_input_status");
             _socketSending.Send(command);
-            OnPostCommand();
+            Thread.Sleep(_commandDelay);
+
+            JsonObject jsonObject = JsonNode.Parse(ReadSendingResponse())!.AsObject();
+            return jsonObject["din_status"]!.AsArray().Deserialize<bool[]>()!;
         }
 
         /// <summary>
@@ -314,7 +314,7 @@ namespace JakaAPI
             byte[] command = JakaCommand.BuildAsByteArray("get_loaded_program");
             _socketSending.Send(command);
             Thread.Sleep(_commandDelay);
-            return JsonNode.Parse(ReadListeningResponse())!.AsObject()["program_name"]!.GetValue<string>();
+            return JsonNode.Parse(ReadSendingResponse())!.AsObject()["program_name"]!.GetValue<string>();
         }
 
         /// <summary>
@@ -326,7 +326,7 @@ namespace JakaAPI
             byte[] command = JakaCommand.BuildAsByteArray("get_program_state");
             _socketSending.Send(command);
             Thread.Sleep(_commandDelay);
-            return JsonNode.Parse(ReadListeningResponse())!.AsObject()["programState"]!.GetValue<string>();
+            return JsonNode.Parse(ReadSendingResponse())!.AsObject()["programState"]!.GetValue<string>();
         }
 
         /// <summary>
@@ -338,7 +338,7 @@ namespace JakaAPI
             byte[] command = JakaCommand.BuildAsByteArray("drag_status");
             _socketSending.Send(command);
             Thread.Sleep(_commandDelay);
-            return JsonNode.Parse(ReadListeningResponse())!.AsObject()["drag_status"]!.GetValue<string>() == "True";
+            return JsonNode.Parse(ReadSendingResponse())!.AsObject()["drag_status"]!.GetValue<string>() == "True";
         }
 
         /// <summary>
@@ -350,7 +350,7 @@ namespace JakaAPI
             byte[] command = JakaCommand.BuildAsByteArray("protective_stop");
             _socketSending.Send(command);
             Thread.Sleep(_commandDelay);
-            return JsonNode.Parse(ReadListeningResponse())!.AsObject()["protective_stop"]!.GetValue<int>() == 1;
+            return JsonNode.Parse(ReadSendingResponse())!.AsObject()["protective_stop"]!.GetValue<int>() == 1;
         }
 
         /// <summary>
@@ -362,7 +362,7 @@ namespace JakaAPI
             byte[] command = JakaCommand.BuildAsByteArray("get_joint_pos");
             _socketSending.Send(command);
             Thread.Sleep(_commandDelay);
-            return JsonNode.Parse(ReadListeningResponse())!.AsObject()["joint_pos"]!.GetValue<double[]>()!;
+            return JsonNode.Parse(ReadSendingResponse())!.AsObject()["joint_pos"]!.GetValue<double[]>()!;
         }
 
         #endregion
@@ -402,7 +402,7 @@ namespace JakaAPI
             byte[] command = JakaCommand.BuildAsByteArray("get_clsn_sensitivity");
             _socketSending.Send(command);
             Thread.Sleep(_commandDelay);
-            return JsonNode.Parse(ReadListeningResponse())!.AsObject()["sensitivityVal"]!.GetValue<byte>();
+            return JsonNode.Parse(ReadSendingResponse())!.AsObject()["sensitivityVal"]!.GetValue<byte>();
         }
 
         /// <summary>

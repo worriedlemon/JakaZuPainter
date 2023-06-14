@@ -22,10 +22,10 @@ namespace PainterCore
     public enum CodeHPGL
     {
         IN, // Initialize, start a plotting job
-        PC, // Pen color (x,r,g,b)
-        PW, // Pen width (w,x)
-        PU, // Pen up and move to (x, y, z)
-        PD, // Pen down and move to (x, y, z)
+        PC, // Pen color (r,g,b)
+        PW, // Pen width (w)
+        PU, // Pen up and move to (x, y)
+        PD, // Pen down and move to (x, y)
     }
 
     public class ParserHPGL
@@ -71,7 +71,7 @@ namespace PainterCore
                 return new CommandHPGL(code, Array.Empty<double>());
             }
             string[] argsArr = argsStr.Split(',');
-        
+
             double[] arguments = new double[argsArr.Length];
             for (int i = 0; i < argsArr.Length; i++)
             {
