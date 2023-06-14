@@ -96,11 +96,6 @@ namespace PainterArm
         /// <param name="movementType">Brush movement type, absolute or relative</param>
         public void BrushOrthogonalMove(double height, MovementType movementType)
         {
-            if (movementType == MovementType.Relative)
-            {
-                height += _currentHeight;
-            }
-
             _currentHeight = (movementType == MovementType.Relative) ? _currentHeight + height : height;
 
             Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX, _currentY, _currentHeight);
@@ -225,10 +220,23 @@ namespace PainterArm
             SetDOState(0, 0, _grip);
         }
 
+        /// <summary>
+        /// Getting brush slot state based on Hall sensor:<br/>
+        /// - <i>High voltage</i> means <i>no magnetic field</i>, a.k.a. no brush in the slot<br/>
+        /// - <i>Low voltage</i> means <i>magnetic field presence</i>, a.k.a. brush is in the slot 
+        /// </summary>
+        /// <param name="brushNum"></param>
+        /// <returns><see cref="BrushSlotState.EMPTY"/> if input contains high voltage signal, <see cref="BrushSlotState.OCCUPIED"/> otherwise</returns>
         public BrushSlotState GetBrushState(int brushNum)
         {
             bool[] states = GetDIStatus();
             return states[_brushesDI[brushNum]] ? BrushSlotState.EMPTY : BrushSlotState.OCCUPIED;
         }
+
+        /// <summary>
+        /// Enabled/disables brush holder checker by applying state to specific pin
+        /// </summary>
+        /// <param name="enable">If true, checker will be enabled, else it will be disabled</param>
+        public void SetBrushHolderCheckingState(bool enable) => SetDOState(0, 9, enable);
     }
 }

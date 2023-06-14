@@ -5,6 +5,7 @@ namespace PainterArm.Calibration
     /// <summary>
     /// Manual surface calibration by three points
     /// </summary>
+    [Obsolete("This class is deprecated, use NeedleManualThreePointCalibration instead")]
     public class SimpleManualThreePointCalibration : AbstractCalibrationBehavior
     {
         /// <summary>
