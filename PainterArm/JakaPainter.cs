@@ -16,9 +16,9 @@ namespace PainterArm
         private LocationDictionary _brushesLocations;
         private CartesianPosition _dryerLocation;
 
-        public readonly double BrushLength = 93;
+        public readonly double BrushLength = 95;
         private readonly double BrushAirOffset = 20;
-        public readonly double NeedleLength = 93;
+        public readonly double NeedleLength = 95;
 
         private double _speed = 100;
         private double _acceleration = 25;
@@ -55,7 +55,7 @@ namespace PainterArm
 
             CurrentBrush = -1;
             SetDOState(0, 0, _grip);
-            CanvasCalibrationBehavior = new AutomaticThreePointCalibration(this);
+            CanvasCalibrationBehavior = new NeedleManualThreePointCalibration(this);
             DryerCalibrationBehavior = new ManualOnePointCalibration(this);
             BrushesCalibrationBehavior = new ManualOnePointCalibration(this);
         }
@@ -83,7 +83,11 @@ namespace PainterArm
         /// <param name="y">Y-axis offset in millimeters</param>
         public void MoveBrushAir(double x, double y)
         {
-            BrushOrthogonalMove(BrushLength + BrushAirOffset, MovementType.Absolute);
+            if (_currentHeight != BrushLength + BrushAirOffset)
+            {
+                BrushOrthogonalMove(BrushLength + BrushAirOffset, MovementType.Absolute);
+            }
+
             Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX = x, _currentY = y, _currentHeight);
             MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), _speed, _acceleration, MovementType.Absolute);
         }
@@ -122,10 +126,10 @@ namespace PainterArm
             BrushOrthogonalMove(BrushLength + zPressOffset, MovementType.Absolute);
 
             // Кисть нажимается, но не полностью
-            BrushOrthogonalMove(BrushLength /*- zPressOffset / 2*/, MovementType.Absolute);
+            BrushOrthogonalMove(BrushLength - zPressOffset / 2, MovementType.Absolute);
 
             // Кисть дивгается в точку, постепенно увеличивая степень нажатия до максимальной
-            //_currentHeight -= zPressOffset;
+            _currentHeight -= zPressOffset / 2;
             Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX = x, _currentY = y, _currentHeight);
             MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), _speed, _acceleration, MovementType.Absolute);
 
@@ -224,9 +228,12 @@ namespace PainterArm
         /// </summary>
         public void DunkBrushInColor(CartesianPosition colorPosition)
         {
+
+            double offset = 3;
+
             Point colorPoint = colorPosition.Point;
 
-            Point upperPoint = new Point(colorPoint.X, colorPoint.Y, colorPoint.Z + BrushLength);
+            Point upperPoint = new Point(colorPoint.X, colorPoint.Y, colorPoint.Z + BrushLength - offset);
             Point airPoint = new Point(colorPoint.X, colorPoint.Y, colorPoint.Z + BrushLength + BrushAirOffset);
             RPYRotation orthogonalRPY = colorPosition.Rpymatrix;
 

@@ -50,7 +50,7 @@ namespace PainterCore
                         case CodeHPGL.PC:
                             //_painter.PickNewBrush(0);
                             //_painter.DryCurrentBrush();
-                            //BrushColor(command.Arguments);
+                            BrushColor(command.Arguments);
                             break;
                         case CodeHPGL.PW:
                             break;
