@@ -254,6 +254,15 @@ namespace JakaAPI
         }
 
         /// <summary>
+        /// Function to get analog input state. Analog ports need to be set to input mode.
+        /// </summary>
+        /// <param name="index">Refers to AO index: 0-7</param>
+        public double GetAIState(int index)
+        {
+            return GetRobotData().AIStatus[index];
+        }
+
+        /// <summary>
         /// Function for triggering analog output
         /// </summary>
         /// <param name="type">Refers to AO type: 0 - controller AO, 1 - tool AO, 2 - extend AO</param>

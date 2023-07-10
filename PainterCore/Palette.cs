@@ -83,7 +83,7 @@ namespace PainterCore
             _colorsLocations = new Dictionary<ColorRGB, CartesianPosition>();
             _strokesRemaining = new Dictionary<ColorRGB, int>();
             _painter = painterArm;
-            CalibrationBehavior = new SimpleManualThreePointCalibration(_painter);
+            CalibrationBehavior = new NeedleManualThreePointCalibration(_painter);
         }
 
         // Calibration function, set Palette to PainterArm coordinated + Gives it allowed borders for color adding
@@ -118,7 +118,7 @@ namespace PainterCore
         public int GetStrokesLeft(ColorRGB color) => _strokesRemaining[color];
 
         // Calculate new coordinates on palette to place new color. Not done yet
-        private CartesianPosition GetAvaliableLocation()
+        public CartesianPosition GetAvaliableLocation()
         {
             return new CartesianPosition(_coordinateSystem.Zero, _coordinateSystem.RPYParameters);
 

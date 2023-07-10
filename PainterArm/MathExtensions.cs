@@ -161,7 +161,7 @@ namespace PainterArm.MathExtensions
             });
         }
 
-        public (RPYRotation Main, RPYRotation Alt) ToRPY(bool degrees = true)
+        public (RPYRotation MainSolution, RPYRotation AltSolution) ToRPY(bool degrees = true)
         {
             DoubleTranslation translate = degrees ? MathDefinitions.RadToDeg : (double arg) => { return arg; };
 

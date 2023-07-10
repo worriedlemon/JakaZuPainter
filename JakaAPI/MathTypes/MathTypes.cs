@@ -120,7 +120,6 @@ namespace JakaAPI.Types.Math
 
         /// <param name="a">First vector</param>
         /// <param name="b">Second vector</param>
-        /// <param name="needNormalization"><see cref="Boolean"> to set whether vectors should be normalized in advance</param>
         /// <returns>A new <see cref="Vector3"/>, which is directed perpendicular to <i>a</i> and <i>b</i></returns>
         public static Vector3 VectorProduct(Vector3 a, Vector3 b) => new(a.Dy * b.Dz - a.Dz * b.Dy, a.Dz * b.Dx - a.Dx * b.Dz, a.Dx * b.Dy - a.Dy * b.Dx);
 
@@ -128,6 +127,17 @@ namespace JakaAPI.Types.Math
         /// <param name="b">Second vector</param>
         /// <returns>A <see cref="double"/> value, representing dot product of two vectors</returns>
         public static double DotProduct(Vector3 a, Vector3 b) => a.Dx * b.Dx + a.Dy * b.Dy + a.Dz * b.Dz;
+
+        /// <param name="direction">Direction vector</param>
+        /// <returns>A <see cref="Vector3[]"/> array, representing an arbitrary orthogonal basis for a direction vector</returns>
+        public static Vector3[] GetOrthogonalBasis(Vector3 direction)
+        {
+            Vector3 axis1 = direction.Normalized();
+            Vector3 upVect = new Vector3(0, 0, 1);
+            Vector3 axis2 = VectorProduct(axis1, upVect);
+            Vector3 axis3 = VectorProduct(axis1, axis2);
+            return new Vector3[] { axis1, axis2, axis3 };
+        }
 
         public override string ToString()
         {

@@ -16,8 +16,14 @@ namespace PainterArm
         private LocationDictionary _brushesLocations;
         private CartesianPosition _dryerLocation;
 
-        private const double _brushLength = 157.5;
-        private const double _needleLength = 157.5;
+        public readonly double BrushLength = 93;
+        private readonly double BrushAirOffset = 20;
+        public readonly double NeedleLength = 93;
+
+        private double _speed = 100;
+        private double _acceleration = 25;
+
+        private BrushPressStyle style = BrushPressStyle.Smooth;
 
         public int CurrentBrush { get; private set; }
 
@@ -49,7 +55,7 @@ namespace PainterArm
 
             CurrentBrush = -1;
             SetDOState(0, 0, _grip);
-            CanvasCalibrationBehavior = new NeedleManualThreePointCalibration(this, _needleLength);
+            CanvasCalibrationBehavior = new AutomaticThreePointCalibration(this);
             DryerCalibrationBehavior = new ManualOnePointCalibration(this);
             BrushesCalibrationBehavior = new ManualOnePointCalibration(this);
         }
@@ -71,14 +77,65 @@ namespace PainterArm
         public void CalibrateDryer(CartesianPosition location) => _dryerLocation = location;
 
         /// <summary>
-        /// Draw line with canvas 2D coordinates
+        /// Moves brush in the air zone to a current position
         /// </summary>
         /// <param name="x">X-axis offset in millimeters <i>(or special units like 25 micron?)</i></param>
         /// <param name="y">Y-axis offset in millimeters</param>
-        public void DrawLine(double x, double y)
+        public void MoveBrushAir(double x, double y)
         {
+            BrushOrthogonalMove(BrushLength + BrushAirOffset, MovementType.Absolute);
             Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX = x, _currentY = y, _currentHeight);
-            MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), 100, 25, MovementType.Absolute);
+            MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), _speed, _acceleration, MovementType.Absolute);
+        }
+
+        /// <summary>
+        /// Draw line with canvas 2D coordinates with current style
+        /// </summary>
+        /// <param name="x">X-axis offset in millimeters <i>(or special units like 25 micron?)</i></param>
+        /// <param name="y">Y-axis offset in millimeters</param>
+        public void DrawLine(double x, double y, double zPressOffset)
+        {
+            switch (style)
+            {
+                case BrushPressStyle.Constant:
+                    DrawLineConstantStyle(x, y, zPressOffset);
+                    break;
+                case BrushPressStyle.Smooth:
+                    DrawLineSmoothStyle(x, y, zPressOffset);
+                    break;
+                case BrushPressStyle.Angular:
+                    DrawLineAngular(x, y, zPressOffset);
+                    break;
+            }
+        }
+
+        private void DrawLineConstantStyle(double x, double y, double zPressOffset)
+        {
+            BrushOrthogonalMove(BrushLength - zPressOffset, MovementType.Absolute);
+            Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX = x, _currentY = y, _currentHeight);
+            MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), _speed, _acceleration, MovementType.Absolute);
+        }
+
+        private void DrawLineSmoothStyle(double x, double y, double zPressOffset)
+        {
+            // Рисование начинается выше точки
+            BrushOrthogonalMove(BrushLength + zPressOffset, MovementType.Absolute);
+
+            // Кисть нажимается, но не полностью
+            BrushOrthogonalMove(BrushLength /*- zPressOffset / 2*/, MovementType.Absolute);
+
+            // Кисть дивгается в точку, постепенно увеличивая степень нажатия до максимальной
+            //_currentHeight -= zPressOffset;
+            Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX = x, _currentY = y, _currentHeight);
+            MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), _speed, _acceleration, MovementType.Absolute);
+
+            // Кисть снова поднимается
+            BrushOrthogonalMove(BrushLength + zPressOffset, MovementType.Absolute);
+        }
+
+        private void DrawLineAngular(double x, double y, double zPressOffset)
+        {
+
         }
 
         // Raw method, will be implemented soon
@@ -100,7 +157,7 @@ namespace PainterArm
 
             Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX, _currentY, _currentHeight);
 
-            MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), 100, 25, MovementType.Absolute);
+            MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), _speed, _acceleration, MovementType.Absolute);
         }
 
         /// <summary>
@@ -110,88 +167,113 @@ namespace PainterArm
         {
             CartesianPosition brushPosition = _brushesLocations[CurrentBrush];
             Point brushPoint = brushPosition.Point;
-            Point upperPoint = new(brushPoint.X, brushPoint.Y, brushPoint.Z + _brushLength);
+            Point upperPoint = new(brushPoint.X, brushPoint.Y, brushPoint.Z + BrushLength + BrushAirOffset);
             RPYRotation orthogonalRPY = brushPosition.Rpymatrix;
 
             // Move to position above the brush
-            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
+            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), _speed, _acceleration, MovementType.Absolute);
 
             // Move to the brush on stand
-            MoveLinear(new CartesianPosition(brushPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
+            MoveLinear(new CartesianPosition(brushPoint, orthogonalRPY), _speed, _acceleration, MovementType.Absolute);
 
-            GripOff();
+            // Rotate the brush
+            RotateBrush(1, 30, false);
 
             // Move to position above the stand again
-            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
+            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), _speed, _acceleration, MovementType.Absolute);
 
             CurrentBrush = -1;
+
+            if (GetBrushState(CurrentBrush) != BrushSlotState.Occupied)
+            {
+                throw new Exception("Brush was not actually returned");
+            }
         }
 
         /// <summary>
-        /// Returns current held brush to the stand
+        /// Takes new brush to the stand
         /// </summary>
-        public void PickNewBrush(int num)
+        public void PickNewBrush(int brushNum)
         {
-            CurrentBrush = num;
-            CartesianPosition brushPosition = _brushesLocations[num];
+            CurrentBrush = brushNum;
+            CartesianPosition brushPosition = _brushesLocations[brushNum];
             Point brushPoint = brushPosition.Point;
-            Point upperPoint = new Point(brushPoint.X, brushPoint.Y, brushPoint.Z + _brushLength);
+            Point upperPoint = new Point(brushPoint.X, brushPoint.Y, brushPoint.Z + BrushLength + BrushAirOffset);
             RPYRotation orthogonalRPY = brushPosition.Rpymatrix;
 
             // Move to position above the brush
-            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
-
-            GripOff();
+            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), _speed, _acceleration, MovementType.Absolute);
 
             // Move to the brush on stand
-            MoveLinear(new CartesianPosition(brushPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
+            MoveLinear(new CartesianPosition(brushPoint, orthogonalRPY), _speed, _acceleration, MovementType.Absolute);
 
-            GripOn();
+            // Rotate the brush
+            RotateBrush(1, 30, true);
 
             // Move to position above the stand again
-            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
+            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), _speed, _acceleration, MovementType.Absolute);
+
+            if (GetBrushState(brushNum) != BrushSlotState.Empty)
+            {
+                throw new Exception("Brush was not actually taken");
+            }
         }
 
-        // Dunk current brush it the palette color
+        /// <summary>
+        /// Dunks taken brush in the provided position
+        /// </summary>
         public void DunkBrushInColor(CartesianPosition colorPosition)
         {
             Point colorPoint = colorPosition.Point;
-            Point upperPoint = new Point(colorPoint.X, colorPoint.Y, colorPoint.Z + _brushLength);
+
+            Point upperPoint = new Point(colorPoint.X, colorPoint.Y, colorPoint.Z + BrushLength);
+            Point airPoint = new Point(colorPoint.X, colorPoint.Y, colorPoint.Z + BrushLength + BrushAirOffset);
             RPYRotation orthogonalRPY = colorPosition.Rpymatrix;
 
             // Move to position above the palete
-            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
+            MoveLinear(new CartesianPosition(airPoint, orthogonalRPY), _speed, _acceleration, MovementType.Absolute);
 
             // Move to color on palette
-            MoveLinear(new CartesianPosition(colorPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
+            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), _speed, _acceleration, MovementType.Absolute);
 
             // Move to position above the palete again
-            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
+            MoveLinear(new CartesianPosition(airPoint, orthogonalRPY), _speed, _acceleration, MovementType.Absolute);
         }
 
+        /// <summary>
+        /// Dryes current brush in the dryer
+        /// </summary>
         public void DryCurrentBrush()
         {
             Point dryerPoint = _dryerLocation.Point;
-            Point upperPoint = new Point(dryerPoint.X, dryerPoint.Y, dryerPoint.Z + _brushLength);
+            Point upperPoint = new Point(dryerPoint.X, dryerPoint.Y, dryerPoint.Z + BrushAirOffset);
             RPYRotation orthogonalRPY = _dryerLocation.Rpymatrix;
 
             // Move to position above the dryer
-            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
+            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), _speed, _acceleration, MovementType.Absolute);
 
             // Move to dryer
-            MoveLinear(new CartesianPosition(dryerPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
+            MoveLinear(new CartesianPosition(dryerPoint, orthogonalRPY), _speed, _acceleration, MovementType.Absolute);
 
-            int rotationCount = 3;
+            // Time for washing
+            Thread.Sleep(2000);
+
+            // Move to position above the dryer again
+            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), _speed, _acceleration, MovementType.Absolute);
+        }
+
+        /// <summary>
+        /// Rotates the brush with given arguments
+        /// </summary>
+        private void RotateBrush(int rotationCount, double angle, bool clockwise)
+        {
             for (int i = 0; i < rotationCount; i++)
             {
                 double c = Math.Pow(-1, i);
-                JointMove(new JointsPosition(0, 0, 0, 0, 0, c * 30), 100, 100, MovementType.Relative);
+                c *= clockwise ? 1 : -1;
+                JointMove(new JointsPosition(0, 0, 0, 0, 0, c * angle), _speed, _acceleration, MovementType.Relative);
             }
-
-            // Move to position above the dryer again
-            MoveLinear(new CartesianPosition(upperPoint, orthogonalRPY), 100, 25, MovementType.Absolute);
         }
-
         /// <summary>
         /// Sets the state of the grip to <b>ON</b>
         /// </summary>
@@ -226,11 +308,11 @@ namespace PainterArm
         /// - <i>Low voltage</i> means <i>magnetic field presence</i>, a.k.a. brush is in the slot 
         /// </summary>
         /// <param name="brushNum"></param>
-        /// <returns><see cref="BrushSlotState.EMPTY"/> if input contains high voltage signal, <see cref="BrushSlotState.OCCUPIED"/> otherwise</returns>
+        /// <returns><see cref="BrushSlotState.Empty"/> if input contains high voltage signal, <see cref="BrushSlotState.Occupied"/> otherwise</returns>
         public BrushSlotState GetBrushState(int brushNum)
         {
             bool[] states = GetDIStatus();
-            return states[_brushesDI[brushNum]] ? BrushSlotState.EMPTY : BrushSlotState.OCCUPIED;
+            return states[_brushesDI[brushNum]] ? BrushSlotState.Empty : BrushSlotState.Occupied;
         }
 
         /// <summary>

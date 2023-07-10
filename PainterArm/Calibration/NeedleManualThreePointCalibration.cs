@@ -18,9 +18,9 @@ namespace PainterArm.Calibration
         /// </summary>
         /// <param name="painterArm"></param>
         /// <param name="needleLength">Length of the used needle</param>
-        public NeedleManualThreePointCalibration(in JakaPainter painterArm, double needleLength) : base(painterArm)
+        public NeedleManualThreePointCalibration(in JakaPainter painterArm) : base(painterArm)
         {
-            _needleLength = needleLength;
+            _needleLength = painterArm.NeedleLength;
         }
 
         public override CoordinateSystem2D Calibrate()
@@ -89,7 +89,7 @@ namespace PainterArm.Calibration
 
             Console.WriteLine($"AxisX: {vAxisX}\nAxisY: {vAxisY}\nAxisY: {vAxisZ}");
 
-            return (new Matrix(vAxisX, vAxisY, vAxisZ) * (inversed ? -1 : 1)).ToRPY().Main;
+            return (new Matrix(vAxisX, vAxisY, vAxisZ) * (inversed ? -1 : 1)).ToRPY().MainSolution;
         }
     }
 }

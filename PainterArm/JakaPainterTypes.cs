@@ -4,10 +4,23 @@ using System.Text.Json.Serialization;
 
 namespace PainterArm
 {
+    /// <summary>
+    /// Defines pressing style of brushes
+    /// </summary>
+    public enum BrushPressStyle
+    {
+        Constant,
+        Smooth,
+        Angular, // Not yet implemented
+    }
+
+    /// <summary>
+    /// Defines if brush holder slot is empty or occupied
+    /// </summary>
     public enum BrushSlotState
     {
-        EMPTY,
-        OCCUPIED
+        Empty,
+        Occupied
     }
 
     /// <summary>

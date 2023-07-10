@@ -23,8 +23,6 @@ namespace PainterCore
 
         private ColorRGB _currentColor = new(0, 0, 0);
 
-        private double _brushLength = 157.5;
-
         public void Start()
         {
             _painter.DebugSubscribe(_logger.LogMessage);
@@ -35,33 +33,43 @@ namespace PainterCore
             Console.WriteLine("Calibration ended. Press any key to continue...");
             Console.ReadKey();
 
+            Thread.Sleep(15000);
+
             ParserHPGL commands = new(@"..\..\..\Resources\strokes2.plt");
 
-            foreach (CommandHPGL command in commands.GetNextCommand())
+            try
             {
-                Console.WriteLine($"Executing: {command}");
-
-                switch (command.Code)
+                foreach (CommandHPGL command in commands.GetNextCommand())
                 {
-                    case CodeHPGL.IN:
-                        break;
-                    case CodeHPGL.PC:
-                        //BrushColor(command.Arguments);
-                        break;
-                    case CodeHPGL.PW:
-                        break;
-                    case CodeHPGL.PU:
-                        _painter.BrushOrthogonalMove(_brushLength + 100, MovementType.Absolute);
-                        BrushMove(command.Arguments);
-                        break;
-                    case CodeHPGL.PD:
-                        _painter.BrushOrthogonalMove(_brushLength + 0, MovementType.Absolute);
-                        BrushMove(command.Arguments);
-                        break;
-                }
+                    Console.WriteLine($"Executing: {command}");
 
-                Thread.Sleep(500);
+                    switch (command.Code)
+                    {
+                        case CodeHPGL.IN:
+                            break;
+                        case CodeHPGL.PC:
+                            //_painter.PickNewBrush(0);
+                            //_painter.DryCurrentBrush();
+                            //BrushColor(command.Arguments);
+                            break;
+                        case CodeHPGL.PW:
+                            break;
+                        case CodeHPGL.PU:
+                            _painter.MoveBrushAir(command.Arguments[0], command.Arguments[1]);
+                            break;
+                        case CodeHPGL.PD:
+                            _painter.DrawLine(command.Arguments[0], command.Arguments[1], 3);
+                            break;
+                    }
+
+                    Thread.Sleep(500);
+                }
             }
+            catch (Exception exception)
+            {
+                Console.WriteLine($"\n---- Error ---- \n + {exception.Message}");
+            }
+
 
             //DisablePainter();
 
@@ -104,8 +112,12 @@ namespace PainterCore
 
         private void BrushColor(double[] arguments)
         {
-            ColorRGB color = new(arguments[1], arguments[2], arguments[3]);
+            _painter.DunkBrushInColor(_palette.GetAvaliableLocation());
 
+            return;
+
+            // Сам скрипт
+            ColorRGB color = new(arguments[1], arguments[2], arguments[3]);
             if (_palette.IsColorAdded(color))
             {
                 if (_palette.GetStrokesLeft(color) == 0)
@@ -139,7 +151,7 @@ namespace PainterCore
             _painter.DunkBrushInColor(_palette.GetColorCoordinates(color));
         }
 
-        private void BrushMove(double[] arguments)
+        private void BrushMove(double[] arguments, double zOffset, bool pressed = true)
         {
             if (false && _palette.GetStrokesLeft(_currentColor) == 0)
             {
@@ -147,7 +159,7 @@ namespace PainterCore
                 _mixer.MixColor(_palette.GetColorCoordinates(_currentColor), _currentColor);
             }
 
-            _painter.DrawLine(arguments[0], arguments[1]);
+            _painter.DrawLine(arguments[0], arguments[1], zOffset);
         }
 
         private void InitPainter()
