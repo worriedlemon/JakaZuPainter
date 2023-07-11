@@ -1,11 +1,8 @@
-﻿using static System.Math;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text.Json.Serialization;
 
 namespace JakaAPI.Types.Math
 {
-    using DoubleTranslation = Func<double, double>;
-
     public struct CartesianPosition
     {
         public Point Point { get; private set; }
@@ -61,89 +58,11 @@ namespace JakaAPI.Types.Math
             Z = z;
         }
 
-        public static explicit operator Vector3(Point point) => new(point.X, point.Y, point.Z);
-
         public override string ToString()
         {
             return $"[{X.ToString(CultureInfo.InvariantCulture)}," +
                 $"{Y.ToString(CultureInfo.InvariantCulture)}," +
                 $"{Z.ToString(CultureInfo.InvariantCulture)}]";
-        }
-    }
-
-    /// <summary>
-    /// A structure, which represents a geometric vector in 3 dimentions
-    /// </summary>
-    public class Vector3
-    {
-        public double Dx { get; private set; }
-        public double Dy { get; private set; }
-        public double Dz { get; private set; }
-
-        public Vector3() { }
-
-        public Vector3(double x, double y, double z)
-        {
-            Dx = x;
-            Dy = y;
-            Dz = z;
-        }
-
-        public static Vector3 operator +(Vector3 first, Vector3 second) => new(first.Dx + second.Dx, first.Dy + second.Dy, first.Dz + second.Dz);
-
-        public static Vector3 operator -(Vector3 vector) => new(-vector.Dx, -vector.Dy, -vector.Dz);
-
-        public static Vector3 operator -(Vector3 first, Vector3 second) => first + (-second);
-
-        public static Vector3 operator *(Vector3 vector, double multiplier) => new(vector.Dx * multiplier, vector.Dy * multiplier, vector.Dz * multiplier);
-
-        public static Vector3 operator *(double multiplier, Vector3 vector) => vector * multiplier;
-
-        public static Vector3 operator /(Vector3 vector, double divider) => vector * (1.0 / divider);
-
-        public static explicit operator Point(Vector3 vector) => new(vector.Dx, vector.Dy, vector.Dz);
-
-        /// <returns>The length of this <see cref="Vector3"> instance</returns>
-        public double Length() => Sqrt(Dx * Dx + Dy * Dy + Dz * Dz);
-
-        /// <returns>A <see cref="Vector3"/> with the unit length and the same direction as the base</returns>
-        /// <exception cref="DivideByZeroException"></exception>
-        public Vector3 Normalized()
-        {
-            double length = Length();
-            if (length == 0)
-            {
-                throw new DivideByZeroException("Length of vector is zero: cannot be normalized");
-            }
-            return this / length;
-        }
-
-        /// <param name="a">First vector</param>
-        /// <param name="b">Second vector</param>
-        /// <returns>A new <see cref="Vector3"/>, which is directed perpendicular to <i>a</i> and <i>b</i></returns>
-        public static Vector3 VectorProduct(Vector3 a, Vector3 b) => new(a.Dy * b.Dz - a.Dz * b.Dy, a.Dz * b.Dx - a.Dx * b.Dz, a.Dx * b.Dy - a.Dy * b.Dx);
-
-        /// <param name="a">First vector</param>
-        /// <param name="b">Second vector</param>
-        /// <returns>A <see cref="double"/> value, representing dot product of two vectors</returns>
-        public static double DotProduct(Vector3 a, Vector3 b) => a.Dx * b.Dx + a.Dy * b.Dy + a.Dz * b.Dz;
-
-        /// <param name="direction">Direction vector</param>
-        /// <returns>A <see cref="Vector3[]"/> array, representing an arbitrary orthogonal basis for a direction vector</returns>
-        public static Vector3[] GetOrthogonalBasis(Vector3 direction)
-        {
-            Vector3 axis1 = direction.Normalized();
-            Vector3 upVect = new Vector3(0, 0, 1);
-            Vector3 axis2 = VectorProduct(axis1, upVect);
-            Vector3 axis3 = VectorProduct(axis1, axis2);
-            return new Vector3[] { axis1, axis2, axis3 };
-        }
-
-        public override string ToString()
-        {
-            return $"[{Dx.ToString(CultureInfo.InvariantCulture)}," +
-                $"{Dy.ToString(CultureInfo.InvariantCulture)}," +
-                $"{Dz.ToString(CultureInfo.InvariantCulture)}]";
         }
     }
 

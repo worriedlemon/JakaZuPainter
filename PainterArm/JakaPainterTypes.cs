@@ -1,5 +1,6 @@
 ﻿using JakaAPI.Types.Math;
 using PainterArm.Calibration;
+using PainterArm.MathExtensions;
 using System.Text.Json.Serialization;
 
 namespace PainterArm
@@ -100,6 +101,11 @@ namespace PainterArm
         {
             if (!(x >= 0 && x <= MaxX || y >= 0 && y <= MaxY)) throw new ArgumentException("X or Y out of field");
             return (Point)((Vector3)Zero + _axisX * x + _axisY * y + _zShift * z);
+        }
+
+        public Point CanvasPointToWorldPoint(Point canvasPoint)
+        {
+            return CanvasPointToWorldPoint(canvasPoint.X, canvasPoint.Y, canvasPoint.Z);
         }
 
         /// <summary>

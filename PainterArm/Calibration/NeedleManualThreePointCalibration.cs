@@ -89,7 +89,7 @@ namespace PainterArm.Calibration
 
             Console.WriteLine($"AxisX: {vAxisX}\nAxisY: {vAxisY}\nAxisY: {vAxisZ}");
 
-            return (new Matrix(vAxisX, vAxisY, vAxisZ) * (inversed ? -1 : 1)).ToRPY().MainSolution;
+            return (vAxisZ * (inversed ? -1 : 1)).ToRPY().MainSolution;
         }
     }
 }

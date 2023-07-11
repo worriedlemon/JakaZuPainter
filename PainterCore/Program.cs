@@ -1,7 +1,6 @@
 ﻿using JakaAPI.Types.Math;
 using PainterArm;
 using System.Numerics;
-using Vector3 = JakaAPI.Types.Math.Vector3;
 
 namespace PainterCore
 {

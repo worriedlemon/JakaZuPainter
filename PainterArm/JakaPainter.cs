@@ -2,6 +2,7 @@
 using JakaAPI.Types.Math;
 using JakaAPI;
 using PainterArm.Calibration;
+using PainterArm.MathExtensions;
 
 namespace PainterArm
 {
@@ -43,6 +44,8 @@ namespace PainterArm
         private bool _grip;
 
         public AbstractCalibrationBehavior CanvasCalibrationBehavior, BrushesCalibrationBehavior, DryerCalibrationBehavior;
+
+        private Point prevPoint = new Point(0, 0, 0);
 
         public JakaPainter(string domain, int portSending = 10001, int portListening = 10000)
             : base(domain, portSending, portListening)
@@ -139,7 +142,58 @@ namespace PainterArm
 
         private void DrawLineAngular(double x, double y, double zPressOffset)
         {
+            BrushOrthogonalMove(BrushLength + zPressOffset, MovementType.Absolute);
 
+            double angleDeg = 45;
+            if (prevPoint.X == 0 && prevPoint.Y == 0 && prevPoint.Z == 0) // Переписать
+            {
+                prevPoint = new Point(x, y, 0);
+                return;
+            }
+
+            Point newPoint = new Point(x, y, 0);
+
+
+            (Point upPoint, RPYRotation rotation) p1 = GetAngularBrushOffset(prevPoint, newPoint, angleDeg);
+
+            double zHeightOffset = p1.upPoint.Z;
+
+            Point upPoint = new Point(p1.upPoint.X, p1.upPoint.Y, p1.upPoint.Z + zPressOffset);
+
+            MoveLinear(new CartesianPosition(upPoint, p1.rotation), _speed, _acceleration, MovementType.Absolute);
+
+            BrushOrthogonalMove(zHeightOffset, MovementType.Absolute);
+
+
+            //Vector3 p2 = (Vector3)p1.upPoint 
+
+
+            Point targetPoint3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX = x, _currentY = y, _currentHeight);
+            MoveLinear(new CartesianPosition(targetPoint3d, _canvasCoordinateSystem.RPYParameters), _speed, _acceleration, MovementType.Absolute);
+
+            //BrushOrthogonalMove(height + zPressOffset, MovementType.Absolute);
+
+            prevPoint = newPoint;
+        }
+
+        private (Point upPoint, RPYRotation rotation) GetAngularBrushOffset(Point oldPoint, Point newPoint, double angle)
+        {
+            double distanceProj = BrushLength * MathDefinitions.RadToDeg(Math.Cos(angle));
+            Vector3 direction = (Vector3)newPoint - (Vector3)prevPoint;
+            direction *= distanceProj / direction.Length();
+
+            Vector3 heightProj = (Vector3)prevPoint + direction;
+
+            double height = BrushLength * MathDefinitions.RadToDeg(Math.Sin(angle));
+            Vector3 heightPoint = heightProj + new Vector3(0, 0, height);
+
+            Vector3 brushDirection = (Vector3)prevPoint - heightPoint;
+
+            RPYRotation rot = brushDirection.ToRPY().MainSolution;
+
+            Point heightPoint3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint((Point)heightPoint);
+
+            return (heightPoint3d, rot);
         }
 
         // Raw method, will be implemented soon
