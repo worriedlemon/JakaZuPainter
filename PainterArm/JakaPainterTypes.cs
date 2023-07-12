@@ -13,6 +13,7 @@ namespace PainterArm
         Constant,
         Smooth,
         Angular, // Not yet implemented
+        Trapezoid,
     }
 
     /// <summary>

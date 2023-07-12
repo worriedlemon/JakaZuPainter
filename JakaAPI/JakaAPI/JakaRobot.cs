@@ -443,7 +443,6 @@ namespace JakaAPI
         {
             byte[] command = JakaCommand.BuildAsByteArray("wait_complete");
             _socketSending.Send(command);
-            //OnPostCommand();
         }
 
         #endregion

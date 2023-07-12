@@ -27,6 +27,7 @@ namespace JakaAPI.Types
 
         public RobotData(string rawJson)
         {
+            //Console.WriteLine($"RawJson: {rawJson}");
             JsonObject jsonObject = JsonNode.Parse(rawJson)!.AsObject();
 
             rawData = rawJson;

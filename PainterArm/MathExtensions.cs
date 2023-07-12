@@ -38,8 +38,9 @@ namespace PainterArm.MathExtensions
 
         public static explicit operator Vector3(Point point) => new(point.X, point.Y, point.Z);
 
-
         public static explicit operator Point(Vector3 vector) => new(vector.Dx, vector.Dy, vector.Dz);
+
+        public static Point operator +(Point first, Vector3 second) => new(first.X + second.Dx, first.Y + second.Dy, first.Z + second.Dz);
 
         /// <returns>The length of this <see cref="Vector3"> instance</returns>
         public double Length() => Sqrt(Dx * Dx + Dy * Dy + Dz * Dz);

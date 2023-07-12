@@ -21,10 +21,10 @@ namespace PainterArm
         private readonly double BrushAirOffset = 20;
         public readonly double NeedleLength = 95;
 
-        private double _speed = 100;
-        private double _acceleration = 25;
+        private double _speed = 150;
+        private double _acceleration = 100;
 
-        private BrushPressStyle style = BrushPressStyle.Smooth;
+        private BrushPressStyle style = BrushPressStyle.Angular;
 
         public int CurrentBrush { get; private set; }
 
@@ -57,7 +57,7 @@ namespace PainterArm
             _currentHeight = 0;
 
             CurrentBrush = -1;
-            SetDOState(0, 0, _grip);
+            //SetDOState(0, 0, _grip);
             CanvasCalibrationBehavior = new NeedleManualThreePointCalibration(this);
             DryerCalibrationBehavior = new ManualOnePointCalibration(this);
             BrushesCalibrationBehavior = new ManualOnePointCalibration(this);
@@ -92,7 +92,7 @@ namespace PainterArm
             }
 
             Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX = x, _currentY = y, _currentHeight);
-            MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), _speed, _acceleration, MovementType.Absolute);
+            JointInverseSolution(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), _speed, _acceleration);
         }
 
         /// <summary>
@@ -113,12 +113,53 @@ namespace PainterArm
                 case BrushPressStyle.Angular:
                     DrawLineAngular(x, y, zPressOffset);
                     break;
+                case BrushPressStyle.Trapezoid:
+                    DrawTrapezoidStroke(x, y, zPressOffset);
+                    break;
             }
+        }
+
+        private void DrawTrapezoidStroke(double x, double y, double zPressOffset)
+        {
+            if (prevPoint.X == 0 && prevPoint.Y == 0 && prevPoint.Z == 0) // Переписать
+            {
+                prevPoint = new Point(x, y, 0);
+                return;
+            }
+
+            Point p1 = prevPoint;
+            Point p4 = new Point(x, y, 0);
+
+            Vector3 direction = (Vector3)p4 - (Vector3)p1;
+
+            Point p2 = p1 + direction * 0.2;
+            Point p3 = p1 + direction * 0.8;
+
+            Point[] points3d = new Point[]
+            {
+                _canvasCoordinateSystem!.CanvasPointToWorldPoint(p1 + new Vector3(0, 0, BrushLength)),
+                _canvasCoordinateSystem!.CanvasPointToWorldPoint(p2 + new Vector3(0, 0, BrushLength - zPressOffset)),
+                _canvasCoordinateSystem!.CanvasPointToWorldPoint(p3 + new Vector3(0, 0, BrushLength - zPressOffset)),
+                _canvasCoordinateSystem!.CanvasPointToWorldPoint(p4 + new Vector3(0, 0, BrushLength))
+            };
+
+            foreach (Point p in points3d)
+            {
+                MoveLinear(new CartesianPosition(p, _canvasCoordinateSystem.RPYParameters), _speed, _acceleration, MovementType.Absolute);
+                Thread.Sleep(50);
+            }
+
+            Console.WriteLine("Start wait");
+            //WaitComplete();
+            Console.WriteLine("End wait");
+
+            prevPoint = p4;
         }
 
         private void DrawLineConstantStyle(double x, double y, double zPressOffset)
         {
             BrushOrthogonalMove(BrushLength - zPressOffset, MovementType.Absolute);
+
             Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX = x, _currentY = y, _currentHeight);
             MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), _speed, _acceleration, MovementType.Absolute);
         }
@@ -142,58 +183,77 @@ namespace PainterArm
 
         private void DrawLineAngular(double x, double y, double zPressOffset)
         {
-            BrushOrthogonalMove(BrushLength + zPressOffset, MovementType.Absolute);
+            Console.WriteLine("\nDrawLineAngular");
+            BrushOrthogonalMove(BrushLength, MovementType.Absolute);
 
-            double angleDeg = 45;
+            double angleDeg = Math.PI / 4;
             if (prevPoint.X == 0 && prevPoint.Y == 0 && prevPoint.Z == 0) // Переписать
             {
                 prevPoint = new Point(x, y, 0);
+                Console.WriteLine("Изначальная точка записана: " + prevPoint);
                 return;
             }
 
             Point newPoint = new Point(x, y, 0);
+            Console.WriteLine("Новая точка встречена: " + newPoint);
+
+            ((Point p1, Point p2), RPYRotation rotation) pointsOffset = GetPointsOffset(prevPoint, newPoint, angleDeg);
 
 
-            (Point upPoint, RPYRotation rotation) p1 = GetAngularBrushOffset(prevPoint, newPoint, angleDeg);
 
-            double zHeightOffset = p1.upPoint.Z;
+            Point p1 = pointsOffset.Item1.p1;
+            Point p2 = pointsOffset.Item1.p2;
+            RPYRotation rot = pointsOffset.rotation;
 
-            Point upPoint = new Point(p1.upPoint.X, p1.upPoint.Y, p1.upPoint.Z + zPressOffset);
+            double height = p1.Z;
 
-            MoveLinear(new CartesianPosition(upPoint, p1.rotation), _speed, _acceleration, MovementType.Absolute);
+            Console.WriteLine($"height: {height}");
 
-            BrushOrthogonalMove(zHeightOffset, MovementType.Absolute);
+            Point p1_up = new Point(p1.X, p1.Y, p1.Z + zPressOffset);
+            MoveLinear(new CartesianPosition(p1_up, rot), _speed, _acceleration, MovementType.Absolute);
 
+            BrushOrthogonalMove(height - zPressOffset, MovementType.Absolute);
 
-            //Vector3 p2 = (Vector3)p1.upPoint 
+            MoveLinear(new CartesianPosition(p2, rot), _speed, _acceleration, MovementType.Absolute);
 
-
-            Point targetPoint3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX = x, _currentY = y, _currentHeight);
-            MoveLinear(new CartesianPosition(targetPoint3d, _canvasCoordinateSystem.RPYParameters), _speed, _acceleration, MovementType.Absolute);
-
-            //BrushOrthogonalMove(height + zPressOffset, MovementType.Absolute);
+            BrushOrthogonalMove(BrushLength, MovementType.Absolute);
 
             prevPoint = newPoint;
         }
 
-        private (Point upPoint, RPYRotation rotation) GetAngularBrushOffset(Point oldPoint, Point newPoint, double angle)
+        private ((Point p1, Point p2), RPYRotation rotation) GetPointsOffset(Point prevPoint, Point newPoint, double angle)
         {
-            double distanceProj = BrushLength * MathDefinitions.RadToDeg(Math.Cos(angle));
+            double brushProjectionLength = BrushLength * Math.Cos(angle);
+            Console.WriteLine($"brushProjectionLength: {brushProjectionLength}");
+
             Vector3 direction = (Vector3)newPoint - (Vector3)prevPoint;
-            direction *= distanceProj / direction.Length();
+            Console.WriteLine($"direction: {direction}");
 
-            Vector3 heightProj = (Vector3)prevPoint + direction;
+            Vector3 brushProjection = direction.Normalized() * brushProjectionLength;
+            Console.WriteLine($"brushProjection: {brushProjection}");
 
-            double height = BrushLength * MathDefinitions.RadToDeg(Math.Sin(angle));
-            Vector3 heightPoint = heightProj + new Vector3(0, 0, height);
+            Point heightProjection = prevPoint + brushProjection;
+            Console.WriteLine($"heightProjection: {heightProjection}");
 
-            Vector3 brushDirection = (Vector3)prevPoint - heightPoint;
+            double height = BrushLength * Math.Sin(angle);
+            Console.WriteLine($"height: {height}");
 
-            RPYRotation rot = brushDirection.ToRPY().MainSolution;
+            Point heightPoint = heightProjection + new Vector3(0, 0, height);
+            Console.WriteLine($"heightPoint: {heightPoint}");
 
-            Point heightPoint3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint((Point)heightPoint);
+            Vector3 brushDirection = (Vector3)prevPoint - (Vector3)heightPoint;
+            Console.WriteLine($"brushDirection: {brushDirection}");
 
-            return (heightPoint3d, rot);
+            RPYRotation rotation = (-1 * brushDirection).Normalized().ToRPY().MainSolution;
+            Console.WriteLine($"rotation: {rotation}");
+
+            Point point1_3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(heightPoint);
+            Console.WriteLine($"point1_3d: {point1_3d}");
+
+            Point point2_3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(heightPoint + direction);
+            Console.WriteLine($"point2_3d: {point2_3d}");
+
+            return ((point1_3d, point2_3d), rotation);
         }
 
         // Raw method, will be implemented soon
@@ -211,11 +271,16 @@ namespace PainterArm
         /// <param name="movementType">Brush movement type, absolute or relative</param>
         public void BrushOrthogonalMove(double height, MovementType movementType)
         {
-            _currentHeight = (movementType == MovementType.Relative) ? _currentHeight + height : height;
+            double _newHeight = (movementType == MovementType.Relative) ? _currentHeight + height : height;
 
-            Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX, _currentY, _currentHeight);
+            if (_newHeight != _currentHeight)
+            {
+                _currentHeight = _newHeight;
 
-            MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), _speed, _acceleration, MovementType.Absolute);
+                Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX, _currentY, _currentHeight);
+
+                MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), _speed, _acceleration, MovementType.Absolute);
+            }
         }
 
         /// <summary>
