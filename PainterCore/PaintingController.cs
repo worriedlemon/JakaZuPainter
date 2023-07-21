@@ -1,6 +1,8 @@
 ﻿using PainterArm;
 using PainterCore.Configuration;
 using JakaAPI.Types;
+using PainterArm.Stroke;
+using JakaAPI.Types.Math;
 
 namespace PainterCore
 {
@@ -26,43 +28,43 @@ namespace PainterCore
         public void Start()
         {
             _painter.DebugSubscribe(_logger.LogMessage);
-            //InitPainter();
 
             Console.WriteLine("Calibration started.");
             CalibrateAllDevices();
             Console.WriteLine("Calibration ended. Press any key to continue...");
             Console.ReadKey();
 
-            Thread.Sleep(15000);
+            List<Stroke> strokes = new List<Stroke>()
+            {
+                new Stroke(new List<Point>()
+                {
+                   new Point(10, 10), new Point(10, 20),
+                }).AddEnter().AddExit(),
 
-            ParserHPGL commands = new(@"..\..\..\Resources\strokes2.plt");
+                new Stroke(new List<Point>()
+                {
+                   new Point(20, 10), new Point(20, 30)
+                }).AddEnter().AddExit(),
+
+                new Stroke(new List<Point>()
+                {
+                   new Point(30, 10), new Point(30, 40)
+                }).AddEnter().AddExit(),
+            };
 
             try
             {
-                foreach (CommandHPGL command in commands.GetNextCommand())
+                BrushColor(new double[2] { 0, 0 });
+
+                foreach (Stroke stroke in strokes)
                 {
-                    Console.WriteLine($"Executing: {command}");
-
-                    switch (command.Code)
+                    Console.WriteLine("New stroke");
+                    foreach (Point point in stroke.GetPoints())
                     {
-                        case CodeHPGL.IN:
-                            break;
-                        case CodeHPGL.PC:
-                            //_painter.PickNewBrush(0);
-                            //_painter.DryCurrentBrush();
-                            BrushColor(command.Arguments);
-                            break;
-                        case CodeHPGL.PW:
-                            break;
-                        case CodeHPGL.PU:
-                            _painter.MoveBrushAir(command.Arguments[0], command.Arguments[1]);
-                            break;
-                        case CodeHPGL.PD:
-                            _painter.DrawLine(command.Arguments[0], command.Arguments[1], 3);
-                            break;
+                        Console.WriteLine("Point: " + point);
+                        _painter.DrawLine(point.X, point.Y, point.Z);
+                        Thread.Sleep(500);
                     }
-
-                    Thread.Sleep(500);
                 }
             }
             catch (Exception exception)

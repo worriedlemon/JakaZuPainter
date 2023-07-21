@@ -103,7 +103,7 @@ namespace PainterArm.MathExtensions
             Matrix U = F.Rounded(6).ReverseMatrix() * R * F;
 
             double ry1 = translate(Asin(-U[2, 0]));
-            double ry2 = translate(PI - ry1);
+            double ry2 = translate(PI/2 - Asin(-U[2, 0]));
 
             double rx1 = translate(Atan2(U[2, 1], U[2, 2]));
             double rx2 = translate(Atan2(-U[2, 1], -U[2, 2]));

@@ -58,6 +58,13 @@ namespace JakaAPI.Types.Math
             Z = z;
         }
 
+        public Point(double x, double y)
+        {
+            X = x;
+            Y = y;
+            Z = 0;
+        }
+
         public override string ToString()
         {
             return $"[{X.ToString(CultureInfo.InvariantCulture)}," +

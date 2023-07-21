@@ -7,7 +7,7 @@ namespace JakaAPI
         public delegate void DebugInformation(string message);
         private event DebugInformation? FunctionFeedback;
 
-        private readonly int _commandDelay = 50;
+        private readonly int _commandDelay = 100;
 
         private string _lastSendingResponse = string.Empty;
 
@@ -26,11 +26,11 @@ namespace JakaAPI
 
         protected void OnPostCommand()
         {
-            //_lastSendingResponse = ReadSendingResponse();
-           // WaitComplete();
-            //_lastSendingResponse = ReadSendingResponse();
-            //ReadSendingResponse();
-            //FunctionFeedback?.Invoke(_lastSendingResponse);
+            /*_lastSendingResponse = ReadSendingResponse();
+            WaitComplete();
+            _lastSendingResponse = ReadSendingResponse();
+            ReadSendingResponse();
+            FunctionFeedback?.Invoke(_lastSendingResponse);*/
             Thread.Sleep(_commandDelay);
         }
 
