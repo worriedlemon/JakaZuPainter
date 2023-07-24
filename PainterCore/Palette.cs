@@ -1,59 +1,56 @@
 ﻿using JakaAPI.Types.Math;
 using PainterArm;
 using PainterArm.Calibration;
+using PainterArm.MathExtensions;
 
 namespace PainterCore
 {
-    public class ColorRGB
+    public struct ColorPickData
     {
-        public double Red
+        public ColorPickData(double pickRadius, bool randomPick, double pressOffset)
         {
-            get
-            {
-                return _red;
-            }
-            set
-            {
-                _red = Bound(value);
-            }
-        }
-        public double Green
-        {
-            get
-            {
-                return _green;
-            }
-            set
-            {
-                _green = Bound(value);
-            }
-        }
-        public double Blue
-        {
-            get
-            {
-                return _blue;
-            }
-            set
-            {
-                _blue = Bound(value);
-            }
+            PickRadius = pickRadius;
+            RadndomPick = randomPick;
+            PressOffset = pressOffset;
         }
 
-        private double _red;
-        private double _green;
-        private double _blue;
+        public double PickRadius { get; private set; }
+
+        public bool RadndomPick { get; private set; }
+
+        public double PressOffset { get; private set; }
+    }
+
+    internal struct ColorCupMathModel
+    {
+        public ColorCupMathModel(double radius, double height, double wallThickness, double bottomThickness)
+        {
+            Radius = radius;
+            Height = height;
+            WallThickness = wallThickness;
+            BottomThickness = bottomThickness;
+        }
+
+        public double Radius { get; private set; }
+
+        public double Height { get; private set; }
+
+        public double WallThickness { get; private set; }
+
+        public double BottomThickness { get; private set; }
+    }
+
+    public class ColorRGB
+    {
+        public double Red { get; private set; }
+        public double Green { get; private set; }
+        public double Blue { get; private set; }
 
         public ColorRGB(double red, double green, double blue)
         {
             Red = red;
             Green = green;
             Blue = blue;
-        }
-
-        private static double Bound(double value)
-        {
-            return value < 0 ? 0 : (value > 255 ? 255 : value);
         }
 
         public override string ToString()
@@ -64,25 +61,22 @@ namespace PainterCore
 
     public class Palette
     {
-        private const int _safeZoneBorder = 10;
-        private const int _colorOffset = 20;
-        private int _currentX = _safeZoneBorder;
-        private int _currentY = _safeZoneBorder;
+        private ColorCupMathModel _cup = new ColorCupMathModel(30, 12, 1, 1);
 
-        private Dictionary<ColorRGB, CartesianPosition> _colorsLocations;
+        private Dictionary<ColorRGB, Point> _colorsLocations;
         private Dictionary<ColorRGB, int> _strokesRemaining;
 
         private const int _strokesCountPerMixing = 5;
 
         private JakaPainter _painter;
-        private CoordinateSystem2D? _coordinateSystem;
+        public CoordinateSystem2D? _coordinateSystem { get; private set; }
         public AbstractCalibrationBehavior CalibrationBehavior;
 
         public Palette(JakaPainter painterArm)
         {
-            _colorsLocations = new Dictionary<ColorRGB, CartesianPosition>();
-            _strokesRemaining = new Dictionary<ColorRGB, int>();
             _painter = painterArm;
+            _colorsLocations = new Dictionary<ColorRGB, Point>();
+            _strokesRemaining = new Dictionary<ColorRGB, int>();
             CalibrationBehavior = new NeedleManualThreePointCalibration(_painter);
         }
 
@@ -91,14 +85,14 @@ namespace PainterCore
 
         public bool IsColorAdded(ColorRGB color) => _colorsLocations.ContainsKey(color);
 
-        public CartesianPosition GetColorCoordinates(ColorRGB color) => _colorsLocations[color];
+        public Point GetColorPoint(ColorRGB color) => _colorsLocations[color];
 
         // Add color to palette
         public void AddNewColor(ColorRGB color)
         {
             if (!_colorsLocations.ContainsKey(color))
             {
-                _colorsLocations.Add(color, GetAvaliableLocation());
+                _colorsLocations.Add(color, GetAvaliableLocation().Point);
                 _strokesRemaining.Add(color, _strokesCountPerMixing);
             }
         }
@@ -120,28 +114,46 @@ namespace PainterCore
         // Calculate new coordinates on palette to place new color. Not done yet
         public CartesianPosition GetAvaliableLocation()
         {
-            return new CartesianPosition(_coordinateSystem.Zero, _coordinateSystem.RPYParameters);
+            return new CartesianPosition(_coordinateSystem!.Zero, _coordinateSystem.RPYParameters);
+        }
 
-            if (_coordinateSystem == null) throw new InvalidOperationException("Pallete is not calibrated yet");
+        private Point GetPointInRadius(Point zero, double radius, double angleRadians)
+        {
+            return new Point(
+                zero.X + radius * Math.Cos(angleRadians),
+                zero.Y + radius * Math.Sin(angleRadians));
+        }
 
-            Point point = _coordinateSystem.CanvasPointToWorldPoint(_currentX, _currentY);
-            CartesianPosition avaliable = new CartesianPosition(point, _coordinateSystem.RPYParameters);
+        // Возвращает точки в локальной! системе координат
+        public List<Point> PickColorInstruction(ColorRGB color, ColorPickData data)
+        {
+            List<Point> points = new List<Point>();
 
-            if (_currentX + _colorOffset <= _coordinateSystem.MaxX - _safeZoneBorder)
-            {
-                _currentX += _colorOffset;
-            }
-            else if (_currentY + _colorOffset <= _coordinateSystem.MaxY - _safeZoneBorder)
-            {
-                _currentX = _safeZoneBorder;
-                _currentY += _colorOffset;
-            }
-            else
-            {
-                throw new ArgumentException("Palette space ended!");
-            }
+            Point color_point = new Point(10, 10, 0); // Заменить на коорды цвета
 
-            return avaliable;
+            Point start_point_raw = GetPointInRadius(color_point, data.PickRadius, 0);
+
+            Point start_point_air = start_point_raw + new Vector3(0, 0, _cup.BottomThickness + _cup.Height + 30);
+            points.Add(start_point_air);
+
+            Point start_point = start_point_raw + new Vector3(0, 0, _cup.BottomThickness);
+            points.Add(start_point);
+
+            Point pick_point = color_point + new Vector3(0, 0, _cup.BottomThickness - data.PressOffset);
+            points.Add(pick_point);
+
+            Point up_pick_point = pick_point + new Vector3(0, 0, _cup.BottomThickness + _cup.Height * 1);
+            points.Add(up_pick_point);
+
+            Point outer_point = GetPointInRadius(color_point, _cup.Radius + _cup.WallThickness + 10, 0);
+            points.Add(outer_point);
+
+            Point inner_point = GetPointInRadius(color_point, _cup.Radius - _cup.WallThickness - 10, 0);
+            points.Add(inner_point);
+
+            points.Add(start_point_air);
+
+            return points;
         }
     }
 }

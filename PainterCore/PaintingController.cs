@@ -10,7 +10,7 @@ namespace PainterCore
     {
         public PaintingController()
         {
-            const string ip = "192.168.1.101";
+            const string ip = "192.168.1.100";
 
             _painter = new(ip);
             _palette = new(_painter);
@@ -27,7 +27,7 @@ namespace PainterCore
 
         public void Start()
         {
-            _painter.DebugSubscribe(_logger.LogMessage);
+            //_painter.DebugSubscribe(_logger.LogMessage);
 
             Console.WriteLine("Calibration started.");
             CalibrateAllDevices();
@@ -39,22 +39,23 @@ namespace PainterCore
                 new Stroke(new List<Point>()
                 {
                    new Point(10, 10), new Point(10, 20),
-                }).AddEnter().AddExit(),
+                }).AddEnter(5, 2).AddExit(5, 2),
 
                 new Stroke(new List<Point>()
                 {
                    new Point(20, 10), new Point(20, 30)
-                }).AddEnter().AddExit(),
+                }).AddEnter(5, 2).AddExit(5, 2),
 
                 new Stroke(new List<Point>()
                 {
                    new Point(30, 10), new Point(30, 40)
-                }).AddEnter().AddExit(),
+                }).AddEnter(5, 2).AddExit(5, 2),
             };
 
             try
             {
                 BrushColor(new double[2] { 0, 0 });
+                Thread.Sleep(500);
 
                 foreach (Stroke stroke in strokes)
                 {
@@ -62,7 +63,7 @@ namespace PainterCore
                     foreach (Point point in stroke.GetPoints())
                     {
                         Console.WriteLine("Point: " + point);
-                        _painter.DrawLine(point.X, point.Y, point.Z);
+                        // _painter.MoveLine(point.X, point.Y, point.Z, 3);
                         Thread.Sleep(500);
                     }
                 }
@@ -114,24 +115,52 @@ namespace PainterCore
 
         private void BrushColor(double[] arguments)
         {
-            _painter.DunkBrushInColor(_palette.GetAvaliableLocation());
+            List<Point> instruction = _palette.PickColorInstruction(new ColorRGB(0, 0, 0), new ColorPickData(20, false, 3));
+
+            for (int i = 0; i <= 4; i++)
+            {
+                Point point_i = instruction[i];
+                Console.WriteLine("Point_i: " + point_i);
+                Point point3d = _palette._coordinateSystem!.CanvasPointToWorldPoint(point_i.X, point_i.Y, point_i.Z + _painter.BrushLength);
+                _painter.MoveLinear(new CartesianPosition(point3d, _palette._coordinateSystem.RPYParameters), 100, 26, MovementType.Absolute);
+            }
+
+            /*_painter.JointMove(new JointsPosition(0, 0, 0, 0, 0, 120), 300, 100, MovementType.Relative);
+
+            for (int i = 6; i <= 6; i++)
+            {
+                Point point_i = instruction[i];
+                Console.WriteLine("Point_i: " + point_i);
+                Point point3d = _palette._coordinateSystem!.CanvasPointToWorldPoint(point_i.X, point_i.Y, point_i.Z + _painter.BrushLength);
+                _painter.MoveLinear(new CartesianPosition(point3d, _palette._coordinateSystem.RPYParameters), 100, 26, MovementType.Absolute);
+            }
+
+            _painter.JointMove(new JointsPosition(0, 0, 0, 0, 0, -120), 300, 100, MovementType.Relative);
+
+            for (int i = 7; i <= 7; i++)
+            {
+                Point point_i = instruction[i];
+                Console.WriteLine("Point_i: " + point_i);
+                Point point3d = _palette._coordinateSystem!.CanvasPointToWorldPoint(point_i.X, point_i.Y, point_i.Z + _painter.BrushLength);
+                _painter.MoveLinear(new CartesianPosition(point3d, _palette._coordinateSystem.RPYParameters), 100, 26, MovementType.Absolute);
+            }*/
 
             return;
 
             // Сам скрипт
-            ColorRGB color = new(arguments[1], arguments[2], arguments[3]);
+            /*ColorRGB color = new(arguments[1], arguments[2], arguments[3]);
             if (_palette.IsColorAdded(color))
             {
                 if (_palette.GetStrokesLeft(color) == 0)
                 {
                     _palette.UpdateColor(color);
-                    _mixer.MixColor(_palette.GetColorCoordinates(color), color);
+                    _mixer.MixColor(_palette.GetColorPoint(color), color);
                 }
             }
             else
             {
                 _palette.AddNewColor(color);
-                _mixer.MixColor(_palette.GetColorCoordinates(color), color);
+                _mixer.MixColor(_palette.GetColorPoint(color), color);
             }
 
             _palette.SubstractStroke(color);
@@ -151,17 +180,7 @@ namespace PainterCore
             _currentColor = color;
 
             _painter.DunkBrushInColor(_palette.GetColorCoordinates(color));
-        }
-
-        private void BrushMove(double[] arguments, double zOffset, bool pressed = true)
-        {
-            if (false && _palette.GetStrokesLeft(_currentColor) == 0)
-            {
-                _palette.UpdateColor(_currentColor);
-                _mixer.MixColor(_palette.GetColorCoordinates(_currentColor), _currentColor);
-            }
-
-            _painter.DrawLine(arguments[0], arguments[1], zOffset);
+            */
         }
 
         private void InitPainter()

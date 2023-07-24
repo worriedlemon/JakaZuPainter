@@ -29,7 +29,7 @@ namespace PainterArm.Stroke
             return points;
         }
 
-        public Stroke AddEnter(double height = 5)
+        public Stroke AddEnter(double height = 5, double offset = 2)
         {
             if (points.Count < 2)
             {
@@ -42,7 +42,7 @@ namespace PainterArm.Stroke
             Vector3 direction = (Vector3)post_start - (Vector3)start;
             Vector3 unit_direction = direction.Normalized();
 
-            Point shifted_start = start + unit_direction * 2;
+            Point shifted_start = start + unit_direction * offset;
             Point upper_point = start + new Vector3(0, 0, height);
 
             points[0] = shifted_start;
@@ -51,7 +51,7 @@ namespace PainterArm.Stroke
             return this;
         }
 
-        public Stroke AddExit(double height = 5)
+        public Stroke AddExit(double height = 5, double offset = 2)
         {
             if (points.Count < 2)
             {
@@ -65,7 +65,7 @@ namespace PainterArm.Stroke
             Vector3 direction = (Vector3)pre_last_point - (Vector3)last_point;
             Vector3 unit_direction = direction.Normalized();
 
-            Point shifted_end = last_point + unit_direction * 2;
+            Point shifted_end = last_point + unit_direction * offset;
             Point upper_point = last_point + new Vector3(0, 0, height);
 
             points[len - 1] = shifted_end;

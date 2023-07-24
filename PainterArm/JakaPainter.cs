@@ -18,7 +18,7 @@ namespace PainterArm
         private CartesianPosition _dryerLocation;
 
         public readonly double BrushLength = 95;
-        private readonly double BrushAirOffset = 20;
+        private readonly double BrushAirOffset = 40;
         public readonly double NeedleLength = 95;
 
         private double _speed = 150;
@@ -104,9 +104,9 @@ namespace PainterArm
         /// </summary>
         /// <param name="x">X-axis offset in millimeters <i>(or special units like 25 micron?)</i></param>
         /// <param name="y">Y-axis offset in millimeters</param>
-        public void DrawLine(double x, double y, double z)
+        public void MoveLine(double x, double y, double z, double pressOfset = 3)
         {
-            DrawLineConstantStyle(x, y, z);
+            DrawLineConstantStyle(x, y, z, pressOfset);
         }
 
         int flag = 0;
@@ -156,9 +156,9 @@ namespace PainterArm
             prevPoint_2d = p4;
         }
 
-        private void DrawLineConstantStyle(double x, double y, double z)
+        private void DrawLineConstantStyle(double x, double y, double z, double pressOffset)
         {
-            Point point3d = _canvasCS!.CanvasPointToWorldPoint(x, y, z + BrushLength - 3);
+            Point point3d = _canvasCS!.CanvasPointToWorldPoint(x, y, z + BrushLength - pressOffset);
             MoveLinear(new CartesianPosition(point3d, _canvasCS.RPYParameters), _speed, _acceleration, MovementType.Absolute);
         }
 
