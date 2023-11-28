@@ -30,7 +30,7 @@ namespace JakaAPI
             WaitComplete();
             ReadSendingResponse();
             FunctionFeedback?.Invoke(_lastSendingResponse);
-            Thread.Sleep(_commandDelay);
+            Thread.Sleep(100);
         }
 
         private string ReadSendingResponse()

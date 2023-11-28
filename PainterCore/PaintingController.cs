@@ -23,7 +23,7 @@ namespace PainterCore
 
         private ColorRGB _currentColor = new(0, 0, 0);
 
-        private double _brushLength = 157.5;
+        private double _brushLength = 95;
 
         public void Start()
         {
@@ -60,7 +60,7 @@ namespace PainterCore
                         break;
                 }
 
-                Thread.Sleep(500);
+                //Thread.Sleep(500);
             }
 
             //DisablePainter();
@@ -141,11 +141,11 @@ namespace PainterCore
 
         private void BrushMove(double[] arguments)
         {
-            if (false && _palette.GetStrokesLeft(_currentColor) == 0)
+            /*if (false && _palette.GetStrokesLeft(_currentColor) == 0)
             {
                 _palette.UpdateColor(_currentColor);
                 _mixer.MixColor(_palette.GetColorCoordinates(_currentColor), _currentColor);
-            }
+            }*/
 
             _painter.DrawLine(arguments[0], arguments[1]);
         }

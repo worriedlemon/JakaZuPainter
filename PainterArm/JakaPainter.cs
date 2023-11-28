@@ -16,8 +16,8 @@ namespace PainterArm
         private LocationDictionary _brushesLocations;
         private CartesianPosition _dryerLocation;
 
-        private const double _brushLength = 157.5;
-        private const double _needleLength = 157.5;
+        private const double _brushLength = 95;
+        private const double _needleLength = 95;
 
         public int CurrentBrush { get; private set; }
 
@@ -78,7 +78,7 @@ namespace PainterArm
         public void DrawLine(double x, double y)
         {
             Point point3d = _canvasCoordinateSystem!.CanvasPointToWorldPoint(_currentX = x, _currentY = y, _currentHeight);
-            MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), 100, 25, MovementType.Absolute);
+            MoveLinear(new CartesianPosition(point3d, _canvasCoordinateSystem.RPYParameters), 200, 45, MovementType.Absolute);
         }
 
         // Raw method, will be implemented soon
